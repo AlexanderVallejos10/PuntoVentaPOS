@@ -166,13 +166,9 @@
         text-decoration: none;
     }
 
-    .edit-icon {
-        color: #333;
-    }
-
-    .delete-icon {
-        color: red;
-    }
+    .barcode-icon { color: #0d57a4; }
+    .edit-icon    { color: #333;    }
+    .delete-icon  { color: red;     }
 
     @media(max-width: 1300px) {
         .filter-row {
@@ -183,9 +179,7 @@
 
 <div class="inventario-wrapper">
 
-    <h1 class="page-title">
-        Listado de productos
-    </h1>
+    <h1 class="page-title">Listado de productos</h1>
 
     <div class="top-line">
 
@@ -204,7 +198,6 @@
                 <a href="{% url 'inventario:preview_exportar_productos' %}">
                     <i class="bi bi-file-earmark-excel text-success"></i>
                 </a>
-
                 <a href="{% url 'inventario:preview_exportar_productos' %}">
                     <i class="bi bi-file-earmark-pdf text-danger"></i>
                 </a>
@@ -220,17 +213,13 @@
             <div class="filter-row">
 
                 <div>
-                    <label class="fw-bold mb-1">
-                        Tipos de productos
-                    </label>
-
+                    <label class="fw-bold mb-1">Tipos de productos</label>
                     <select
                         name="categoria"
                         class="form-select form-select-sm"
                         onchange="document.getElementById('filtroInventario').submit();"
                     >
                         <option value="">TODOS</option>
-
                         {% for categoria in categorias %}
                             <option
                                 value="{{ categoria.id }}"
@@ -243,17 +232,13 @@
                 </div>
 
                 <div>
-                    <label class="fw-bold mb-1">
-                        Bodega
-                    </label>
-
+                    <label class="fw-bold mb-1">Bodega</label>
                     <select
                         name="sede"
                         class="form-select form-select-sm"
                         onchange="document.getElementById('filtroInventario').submit();"
                     >
                         <option value="">TODAS</option>
-
                         {% for sede in sedes %}
                             <option
                                 value="{{ sede.id }}"
@@ -266,32 +251,26 @@
                 </div>
 
                 <div class="tool-icons">
-
                     <a href="{% url 'inventario:menu_digital_productos' %}">
                         <span>Menú<br>Digital</span>
                         <i class="bi bi-qr-code"></i>
                     </a>
-
                     <a href="{% url 'inventario:variacion_producto_list' %}">
                         <span>Ver<br>Variación</span>
                         <i class="bi bi-sliders"></i>
                     </a>
-
                     <a href="{% url 'inventario:importar_productos_excel' %}">
                         <span>Importar<br>Productos</span>
                         <i class="bi bi-cloud-arrow-up"></i>
                     </a>
-
                     <a href="{% url 'inventario:actualizar_productos_excel' %}">
                         <span>Actualizar<br>Productos</span>
                         <i class="bi bi-arrow-clockwise"></i>
                     </a>
-
                 </div>
 
                 <div>
                     <div class="search-area">
-
                         <input
                             type="text"
                             name="buscar"
@@ -299,18 +278,12 @@
                             class="form-control form-control-sm"
                             placeholder="Buscar por nombre o Cód. de barra"
                         >
-
                         <button class="btn btn-outline-primary btn-sm">
                             <i class="bi bi-search"></i>
                         </button>
-
-                        <a
-                            href="{% url 'inventario:stock_bodega_create' %}"
-                            class="btn-nuevo"
-                        >
+                        <a href="{% url 'inventario:stock_bodega_create' %}" class="btn-nuevo">
                             Nuevo
                         </a>
-
                     </div>
                 </div>
 
@@ -343,24 +316,15 @@
                 <tbody>
 
                     {% for stock in stocks %}
-
                         <tr>
 
-                            <td>
-                                {{ forloop.counter }}
-                            </td>
+                            <td>{{ forloop.counter }}</td>
 
                             <td>
                                 {% if stock.producto.imagen %}
-                                    <img
-                                        src="{{ stock.producto.imagen.url }}"
-                                        class="producto-img-mini"
-                                    >
+                                    <img src="{{ stock.producto.imagen.url }}" class="producto-img-mini">
                                 {% elif stock.producto.imagen_url %}
-                                    <img
-                                        src="{{ stock.producto.imagen_url }}"
-                                        class="producto-img-mini"
-                                    >
+                                    <img src="{{ stock.producto.imagen_url }}" class="producto-img-mini">
                                 {% else %}
                                     <div class="sin-imagen">
                                         <i class="bi bi-image"></i>
@@ -368,81 +332,45 @@
                                 {% endif %}
                             </td>
 
-                            <td>
-                                {{ stock.producto.codigo }}
-                            </td>
+                            <td>{{ stock.producto.codigo }}</td>
 
-                            <td class="nombre">
-                                {{ stock.producto.nombre }}
-                            </td>
+                            <td class="nombre">{{ stock.producto.nombre }}</td>
 
-                            <td>
-                                {{ stock.stock|floatformat:0 }} Und
-                            </td>
+                            <td>{{ stock.stock|floatformat:0 }} Und</td>
 
-                            <td>
-                                S/ {{ stock.producto.precio_compra|default:"0.00" }}
-                            </td>
+                            <td>S/ {{ stock.producto.precio_compra|default:"0.00" }}</td>
 
-                            <td>
-                                S/ {{ stock.producto.precio_venta }}
-                            </td>
+                            <td>S/ {{ stock.producto.precio_venta }}</td>
 
-                            <td>
-                                S/ 0.00
-                            </td>
+                            <td>S/ 0.00</td>
 
-                            <td>
-                                <span class="icon-ok">✔</span>
-                            </td>
+                            <td><span class="icon-ok">&#10004;</span></td>
 
-                            <td>
-                                <span class="icon-no">✖</span>
-                            </td>
+                            <td><span class="icon-no">&#10006;</span></td>
 
-                            <td>
-                                <span class="icon-no">✖</span>
-                            </td>
+                            <td><span class="icon-no">&#10006;</span></td>
 
                             <td>
                                 {% if stock.activo and stock.producto.activo %}
-                                    <span class="estado-activo">
-                                        Activo
-                                    </span>
+                                    <span class="estado-activo">Activo</span>
                                 {% else %}
-                                    <span class="badge bg-danger">
-                                        Inactivo
-                                    </span>
+                                    <span class="badge bg-danger">Inactivo</span>
                                 {% endif %}
                             </td>
 
                             <td>
-                                <a
-                                    href="{% url 'inventario:stock_bodega_update' stock.id %}"
-                                    class="action-icon edit-icon"
-                                >
-                                    <i class="bi bi-pencil-square"></i>
-                                </a>
-
-                                <a
-                                    href="{% url 'inventario:stock_bodega_delete' stock.id %}"
-                                    class="action-icon delete-icon"
-                                    onclick="return confirm('¿Seguro que deseas eliminar este producto?');"
-                                >
-                                    <i class="bi bi-trash"></i>
-                                </a>
+                                <a href="{% url 'inventario:imprimir_barcode_producto' stock.producto.id %}" target="_blank" title="Imprimir código de barras" class="action-icon barcode-icon"><i class="bi bi-upc-scan"></i></a>
+                                <a href="{% url 'inventario:stock_bodega_update' stock.id %}" title="Editar" class="action-icon edit-icon"><i class="bi bi-pencil-square"></i></a>
+                                <a href="{% url 'inventario:stock_bodega_delete' stock.id %}" title="Eliminar" class="action-icon delete-icon" onclick="return confirm('¿Seguro que deseas eliminar este producto?');"><i class="bi bi-trash"></i></a>
                             </td>
 
                         </tr>
-
                     {% empty %}
-
                         <tr>
                             <td colspan="13" class="text-center py-5 text-muted">
                                 No hay productos asignados a bodegas.
                             </td>
                         </tr>
-
                     {% endfor %}
 
                 </tbody>
@@ -453,25 +381,13 @@
 
         <div class="d-flex justify-content-between align-items-center mt-3">
 
-            <div>
-                Paginas: 1
-            </div>
+            <div>Paginas: 1</div>
 
             <nav>
                 <ul class="pagination pagination-sm mb-0">
-
-                    <li class="page-item disabled">
-                        <a class="page-link">«</a>
-                    </li>
-
-                    <li class="page-item active">
-                        <a class="page-link">1</a>
-                    </li>
-
-                    <li class="page-item disabled">
-                        <a class="page-link">»</a>
-                    </li>
-
+                    <li class="page-item disabled"><a class="page-link">«</a></li>
+                    <li class="page-item active"><a class="page-link">1</a></li>
+                    <li class="page-item disabled"><a class="page-link">»</a></li>
                 </ul>
             </nav>
 

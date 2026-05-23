@@ -44,6 +44,7 @@ from inventario.views.seguimiento_producto_views import seguimiento_producto_lis
 from inventario.views.exportar_seguimiento_views import exportar_seguimiento_excel
 from inventario.views.exportar_seguimiento_views import exportar_seguimiento_pdf
 from inventario.views.configuracion_empresa_views import configuracion_empresa
+from productos.views.producto_views import imprimir_barcode_producto
 
 app_name = 'inventario'
 
@@ -94,4 +95,5 @@ urlpatterns = [
     path('seguimiento-productos/exportar/excel/',exportar_seguimiento_excel,name='exportar_seguimiento_excel'),
     path('seguimiento-productos/exportar/pdf/',exportar_seguimiento_pdf,name='exportar_seguimiento_pdf'),
     path('configuracion/',configuracion_empresa,name='configuracion_empresa'),
+    path('productos/imprimir-codigo/<int:producto_id>/',imprimir_barcode_producto,name='imprimir_barcode_producto'),
 ]

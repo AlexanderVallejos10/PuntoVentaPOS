@@ -1,0 +1,526 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Editar venta
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-4">
+
+    <div class="card border-0 shadow-sm rounded-4">
+
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+
+                <div>
+                    <h2 class="fw-bold mb-1">
+                        Editar Venta
+                    </h2>
+
+                    <div class="text-muted">
+                        Venta #{{ venta.id|stringformat:"06d" }}
+                    </div>
+                </div>
+
+                <a
+                    href="{% url 'ventas:historial_ventas' %}"
+                    class="btn btn-secondary"
+                >
+                    Volver
+                </a>
+
+            </div>
+
+            <form method="post" id="formEditarVenta">
+
+                {% csrf_token %}
+
+                <div class="row mb-4">
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">
+                            Método de pago
+                        </label>
+
+                        <select
+                            name="metodo_pago"
+                            class="form-select"
+                            required
+                        >
+                            <option value="EFECTIVO"
+                                {% if venta.metodo_pago == 'EFECTIVO' %}
+                                selected
+                                {% endif %}
+                            >
+                                EFECTIVO
+                            </option>
+
+                            <option value="YAPE"
+                                {% if venta.metodo_pago == 'YAPE' %}
+                                selected
+                                {% endif %}
+                            >
+                                YAPE
+                            </option>
+
+                            <option value="PLIN"
+                                {% if venta.metodo_pago == 'PLIN' %}
+                                selected
+                                {% endif %}
+                            >
+                                PLIN
+                            </option>
+
+                            <option value="TARJETA"
+                                {% if venta.metodo_pago == 'TARJETA' %}
+                                selected
+                                {% endif %}
+                            >
+                                TARJETA
+                            </option>
+
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">
+                            Descuento
+                        </label>
+
+                        <input
+                            type="number"
+                            step="0.01"
+                            name="descuento"
+                            id="descuento"
+                            class="form-control"
+                            value="{{ venta.descuento }}"
+                        >
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">
+                            IGV
+                        </label>
+
+                        <input
+                            type="number"
+                            step="0.01"
+                            name="impuesto"
+                            id="impuesto"
+                            class="form-control"
+                            value="{{ venta.impuesto }}"
+                        >
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">
+                            Delivery
+                        </label>
+
+                        <input
+                            type="number"
+                            step="0.01"
+                            name="costo_envio"
+                            id="costo_envio"
+                            class="form-control"
+                            value="{{ venta.costo_envio }}"
+                        >
+                    </div>
+
+                </div>
+
+                <div class="table-responsive">
+
+                    <table class="table table-bordered align-middle" id="tablaProductos">
+
+                        <thead class="table-light">
+
+                            <tr>
+                                <th style="width:35%">
+                                    Producto
+                                </th>
+
+                                <th style="width:15%">
+                                    Cantidad
+                                </th>
+
+                                <th style="width:20%">
+                                    Precio
+                                </th>
+
+                                <th style="width:20%">
+                                    Subtotal
+                                </th>
+
+                                <th style="width:10%">
+                                    Acción
+                                </th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for detalle in venta.detalles.all %}
+
+                            <tr>
+
+                                <td>
+
+                                    <input
+                                        type="hidden"
+                                        name="detalle_id[]"
+                                        value="{{ detalle.id }}"
+                                    >
+
+                                    <select
+                                        name="producto_id[]"
+                                        class="form-select producto-select"
+                                        onchange="actualizarPrecioProducto(this)"
+                                        required
+                                    >
+
+                                        {% for producto in productos %}
+                                            <option
+                                                value="{{ producto.id }}"
+                                                data-precio="{{ producto.precio_venta }}"
+                                                {% if producto.id == detalle.producto.id %}
+                                                selected
+                                                {% endif %}
+                                            >
+                                                {{ producto.nombre }}
+                                            </option>
+                                        {% endfor %}
+
+                                    </select>
+
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="number"
+                                        name="cantidad[]"
+                                        class="form-control cantidad"
+                                        value="{{ detalle.cantidad }}"
+                                        min="1"
+                                        required
+                                    >
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="precio_unitario[]"
+                                        class="form-control precio"
+                                        value="{{ detalle.precio_unitario }}"
+                                        readonly
+                                    >
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="number"
+                                        class="form-control subtotal"
+                                        value="{{ detalle.subtotal }}"
+                                        readonly
+                                    >
+                                </td>
+
+                                <td class="text-center">
+                                    <button
+                                        type="button"
+                                        class="btn btn-danger btn-sm eliminarFila"
+                                    >
+                                        ×
+                                    </button>
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="btn btn-outline-primary mb-4"
+                    id="agregarProducto"
+                >
+                    + Agregar producto
+                </button>
+
+                <div class="row">
+
+                    <div class="col-md-4 offset-md-8">
+
+                        <div class="card bg-light border-0">
+
+                            <div class="card-body">
+
+                                <div class="d-flex justify-content-between mb-2">
+                                    <strong>Subtotal:</strong>
+                                    <span id="subtotalGeneral">
+                                        S/ 0.00
+                                    </span>
+                                </div>
+
+                                <div class="d-flex justify-content-between mb-2">
+                                    <strong>Total:</strong>
+                                    <span
+                                        id="totalGeneral"
+                                        class="fw-bold text-success fs-4"
+                                    >
+                                        S/ 0.00
+                                    </span>
+                                </div>
+
+                                <input
+                                    type="hidden"
+                                    name="monto_recibido"
+                                    id="monto_recibido"
+                                >
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+
+                    <button class="btn btn-primary btn-lg">
+                        Guardar cambios
+                    </button>
+
+                    <a
+                        href="{% url 'ventas:historial_ventas' %}"
+                        class="btn btn-outline-secondary btn-lg"
+                    >
+                        Cancelar
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function actualizarPrecioProducto(select) {
+
+    const fila =
+        select.closest('tr');
+
+    const precio =
+        parseFloat(
+            select.options[
+                select.selectedIndex
+            ].dataset.precio
+        ) || 0;
+
+    fila.querySelector(
+        '.precio'
+    ).value =
+        precio.toFixed(2);
+
+    recalcularTotales();
+}
+
+
+function recalcularTotales() {
+
+    let subtotalGeneral = 0;
+
+    document.querySelectorAll(
+        '#tablaProductos tbody tr'
+    ).forEach(fila => {
+
+        const cantidad =
+            parseFloat(
+                fila.querySelector(
+                    '.cantidad'
+                ).value
+            ) || 0;
+
+        const precio =
+            parseFloat(
+                fila.querySelector(
+                    '.precio'
+                ).value
+            ) || 0;
+
+        const subtotal =
+            cantidad * precio;
+
+        fila.querySelector(
+            '.subtotal'
+        ).value =
+            subtotal.toFixed(2);
+
+        subtotalGeneral += subtotal;
+    });
+
+    const descuento =
+        parseFloat(
+            document.getElementById(
+                'descuento'
+            ).value
+        ) || 0;
+
+    const impuesto =
+        parseFloat(
+            document.getElementById(
+                'impuesto'
+            ).value
+        ) || 0;
+
+    const delivery =
+        parseFloat(
+            document.getElementById(
+                'costo_envio'
+            ).value
+        ) || 0;
+
+    const total =
+        subtotalGeneral
+        - descuento
+        + impuesto
+        + delivery;
+
+    document.getElementById(
+        'subtotalGeneral'
+    ).innerText =
+        `S/ ${subtotalGeneral.toFixed(2)}`;
+
+    document.getElementById(
+        'totalGeneral'
+    ).innerText =
+        `S/ ${total.toFixed(2)}`;
+
+    document.getElementById(
+        'monto_recibido'
+    ).value =
+        total.toFixed(2);
+}
+
+
+document.addEventListener(
+    'input',
+    function(e){
+
+        if(
+            e.target.classList.contains(
+                'cantidad'
+            ) ||
+            e.target.id === 'descuento' ||
+            e.target.id === 'impuesto' ||
+            e.target.id === 'costo_envio'
+        ){
+            recalcularTotales();
+        }
+    }
+);
+
+
+document.getElementById(
+    'agregarProducto'
+).addEventListener(
+    'click',
+    function(){
+
+        const tbody =
+            document.querySelector(
+                '#tablaProductos tbody'
+            );
+
+        const nuevaFila =
+            tbody.rows[0].cloneNode(
+                true
+            );
+
+        nuevaFila.querySelector(
+            '[name="detalle_id[]"]'
+        ).value = '';
+
+        nuevaFila.querySelector(
+            '.cantidad'
+        ).value = 1;
+
+        tbody.appendChild(
+            nuevaFila
+        );
+
+        actualizarPrecioProducto(
+            nuevaFila.querySelector(
+                '.producto-select'
+            )
+        );
+    }
+);
+
+
+document.addEventListener(
+    'click',
+    function(e){
+
+        if(
+            e.target.classList.contains(
+                'eliminarFila'
+            )
+        ){
+
+            const filas =
+                document.querySelectorAll(
+                    '#tablaProductos tbody tr'
+                );
+
+            if(
+                filas.length <= 1
+            ){
+                alert(
+                    'Debe existir al menos un producto.'
+                );
+                return;
+            }
+
+            e.target.closest(
+                'tr'
+            ).remove();
+
+            recalcularTotales();
+        }
+    }
+);
+
+
+window.onload = function(){
+
+    document.querySelectorAll(
+        '.producto-select'
+    ).forEach(select => {
+
+        actualizarPrecioProducto(
+            select
+        );
+    });
+
+    recalcularTotales();
+}
+
+</script>
+
+{% endblock %}

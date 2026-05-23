@@ -213,6 +213,30 @@
             text-decoration: none;
             font-size: 15px;
         }
+
+        .submenu-Informes {
+            position: fixed;
+            top: 58px;
+            left: 92px;
+            width: 240px;
+            min-height: 100vh;
+            background: #426fb4;
+            flex-direction: column;
+            z-index: 3000;
+            padding-top: 12px;
+            display: none;
+        }
+        .menu-dropdown:hover .submenu-Informes {
+            display: flex;
+        }
+        .submenu-Informes .submenu-item {
+            display: block;
+            color: white;
+            padding: 12px 18px;
+            text-decoration: none;
+            font-size: 15px;
+        }
+
     </style>
     {% block css %}{% endblock %}
 </head>
@@ -220,7 +244,6 @@
 <div class="app-layout">
     <aside class="sidebar">
 
-        <!-- ✅ BRAND: logo encima, nombre empresa y usuario debajo, compacto -->
         <div class="brand">
             {% if empresa_config.logo_sidebar %}
                 <img
@@ -238,7 +261,6 @@
                 {{ request.user.username|upper }}
             </span>
         </div>
-        <!-- FIN BRAND -->
 
         <a href="{% url 'home' %}" class="menu-item">
             <i class="bi bi-bar-chart-line"></i>
@@ -254,19 +276,26 @@
                 Inventario
             </div>
             <div class="submenu-inventario">
+                {% if request.user.is_superuser or request.user|has_group:"Administrador" %}
                 <a href="{% url 'inventario:sede_list' %}" class="submenu-item">Bodegas</a>
                 <a href="{% url 'inventario:categoria_inventario_list' %}" class="submenu-item">Categorías</a>
+                {% endif %}
                 <a href="{% url 'inventario:inventario_producto_list' %}" class="submenu-item">Productos</a>
                 <a href="{% url 'inventario:baja_existencia_list' %}" class="submenu-item">Baja existencias</a>
                 <a href="{% url 'inventario:estado_inventario' %}" class="submenu-item">Inventario</a>
+                {% if request.user.is_superuser or request.user|has_group:"Administrador" %}
                 <a href="{% url 'inventario:stock_bodega_create' %}" class="submenu-item">Ajustes de inventario</a>
                 <a href="{% url 'inventario:traslado_list' %}" class="submenu-item">Traslados entre bodegas</a>
+                {% endif %}
                 <a href="{% url 'inventario:inventario_categoria_list' %}" class="submenu-item">Inventario categorías</a>
+                {% if request.user.is_superuser or request.user|has_group:"Administrador" %}
                 <a href="{% url 'inventario:promocion_list' %}" class="submenu-item">Promociones</a>
+                {% endif %}
                 <a href="{% url 'inventario:seguimiento_producto_list' %}" class="submenu-item">Seguimiento de productos</a>
             </div>
         </div>
 
+        {% if request.user.is_superuser or request.user|has_group:"Administrador" %}
         <div class="menu-dropdown">
             <div class="menu-item">
                 <i class="bi bi-bag"></i>
@@ -280,7 +309,9 @@
                 <a href="{% url 'compras:devolucion_compra_list' %}" class="submenu-item">Devolucion, notas de ajuste</a>
             </div>
         </div>
+        {% endif %}
 
+        {% if request.user.is_superuser or request.user|has_group:"Administrador" %}
         <div class="menu-dropdown">
             <div class="menu-item">
                 <i class="bi bi-cash-stack"></i>
@@ -292,6 +323,7 @@
                 <a href="{% url 'gastos:gasto_categoria_list' %}" class="submenu-item">Gastos por categorias</a>
             </div>
         </div>
+        {% endif %}
 
         <a href="{% url 'clientes:cliente_list' %}" class="menu-item">
             <i class="bi bi-people"></i>
@@ -300,17 +332,30 @@
 
         <div class="menu-dropdown">
             <div class="menu-item">
+                <i class="bi bi-file-text"></i>
+                Informes
+            </div>
+            <div class="submenu-Informes">
+                <a href="{% url 'ventas:historial_ventas' %}" class="submenu-item">Historial de ventas</a>
+                <a href="{% url 'ventas:detalle_ventas' %}" class="submenu-item">Detalles de venta</a>
+                <a href="{% url 'ventas:ventas_por_categoria' %}" class="submenu-item">Ventas por categoría</a>
+            </div>
+        </div>
+
+        {% if request.user.is_superuser or request.user|has_group:"Administrador" %}
+        <div class="menu-dropdown">
+            <div class="menu-item">
                 <i class="bi bi-gear"></i>
                 Configuracion
             </div>
             <div class="submenu-Config">
                 <a href="{% url 'inventario:configuracion_empresa' %}" class="submenu-item">Sucursal</a>
                 <a href="{% url 'compras:proveedor_list' %}" class="submenu-item">Proveedores</a>
-                {% if request.user.is_superuser or request.user|has_group:"Administrador" %}
                     <a href="{% url 'usuarios:usuario_list' %}" class="submenu-item">Usuarios</a>
-                {% endif %}
+                    <a href="{% url 'ventas:caja_list' %}" class="submenu-item">Cajas</a>
             </div>
         </div>
+        {% endif %}
 
     </aside>
     <main class="main-content">

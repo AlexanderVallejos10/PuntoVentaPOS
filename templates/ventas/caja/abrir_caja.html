@@ -1,0 +1,87 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Abrir Caja
+{% endblock %}
+
+{% block content %}
+
+<div class="page-card" style="max-width: 600px;">
+
+    <h2 class="fw-bold mb-4">
+        Abrir Caja
+    </h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">
+                Caja
+            </label>
+
+            <select
+                name="caja"
+                class="form-select"
+                required
+            >
+                <option value="">
+                    Seleccione una caja
+                </option>
+
+                {% for caja in cajas %}
+                    <option
+                        value="{{ caja.id }}"
+                        {% if caja.id in cajas_ocupadas %}
+                            disabled
+                        {% endif %}
+                    >
+                        {{ caja.nombre }} - {{ caja.sede.nombre }}
+                        {% if caja.id in cajas_ocupadas %}
+                            (OCUPADA)
+                        {% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">
+                Turno
+            </label>
+
+            <select
+                name="turno"
+                class="form-select"
+                required
+            >
+                <option value="MANANA">Mañana</option>
+                <option value="TARDE">Tarde</option>
+                <option value="NOCHE">Noche</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">
+                Monto inicial
+            </label>
+
+            <input
+                type="number"
+                step="0.01"
+                name="monto_inicial"
+                class="form-control"
+                value="0.00"
+                required
+            >
+        </div>
+
+        <button class="btn btn-primary">
+            Abrir Caja
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

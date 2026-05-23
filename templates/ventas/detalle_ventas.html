@@ -1,0 +1,207 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Detalle de ventas{% endblock %}
+
+{% block content %}
+
+<style>
+    .titulo-reporte {
+        font-size: 34px;
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 28px;
+    }
+
+    .reporte-card {
+        background: white;
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: 0 4px 14px rgba(0,0,0,.06);
+    }
+
+    .tabla-detalle {
+        font-size: 12px;
+    }
+
+    .tabla-detalle th {
+        background: #e7e7e7;
+        text-align: center;
+        vertical-align: middle;
+        padding: 8px 5px;
+        font-size: 12px;
+    }
+
+    .tabla-detalle td {
+        text-align: center;
+        vertical-align: middle;
+        padding: 6px 5px;
+        font-size: 12px;
+    }
+
+    .buscador-detalle {
+        max-width: 420px;
+    }
+</style>
+
+
+<div class="container-fluid px-4">
+
+    <h1 class="titulo-reporte">
+        Detalle de ventas
+    </h1>
+
+    <div class="d-flex justify-content-between mb-3">
+        <div>
+            <label>Por página</label>
+            <select class="form-select" style="width:90px;">
+                <option>10</option>
+            </select>
+        </div>
+
+        <div class="text-center">
+            <div>Exportar</div>
+            <a
+                href="{% url 'ventas:exportar_detalle_ventas_excel' %}?buscar={{ buscar }}"
+                class="btn btn-outline-success"
+            >
+                <i class="bi bi-file-earmark-excel"></i>
+            </a>
+
+            <a
+                href="{% url 'ventas:exportar_detalle_ventas_pdf' %}?buscar={{ buscar }}"
+                class="btn btn-outline-danger"
+            >
+                <i class="bi bi-file-earmark-pdf"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="reporte-card">
+
+        <form method="get">
+            <div class="row align-items-end mb-4">
+
+                <div class="col-md-4 ms-auto">
+                    <input
+                        type="text"
+                        name="buscar"
+                        value="{{ buscar }}"
+                        class="form-control"
+                        placeholder="Buscar producto, factura o cliente"
+                    >
+                </div>
+
+                <div class="col-md-1">
+                    <button class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+
+            </div>
+        </form>
+
+        <div class="table-responsive">
+
+            <table class="table table-bordered align-middle tabla-detalle">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>Item</th>
+                        <th>Cód Factura</th>
+                        <th>Sede</th>
+                        <th>Caja</th>
+                        <th>Fecha Venta</th>
+                        <th>Cliente</th>
+                        <th>Cód Producto</th>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Valor Venta</th>
+                        <th>Cantidad</th>
+                        <th>Unidad</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for detalle in detalles %}
+
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+
+                            <td>
+                                {{ detalle.venta.id|stringformat:"06d" }}
+                            </td>
+
+                            <td>
+                                {{ detalle.venta.sede.nombre|default:"-" }}
+                            </td>
+
+                            <td>
+                                {% with mov=detalle.venta.movimientocaja_set.first %}
+                                    {% if mov %}
+                                        {{ mov.apertura.caja.nombre }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+
+                            <td>
+                                {{ detalle.venta.created|date:"Y-m-d H:i:s" }}
+                            </td>
+
+                            <td>
+                                {{ detalle.venta.cliente.nombre|default:"Cliente general" }}
+                            </td>
+
+                            <td>
+                                {{ detalle.producto.codigo }}
+                            </td>
+
+                            <td>
+                                {{ detalle.producto.nombre }}
+                            </td>
+
+                            <td>
+                                {{ detalle.producto.categoria.nombre }}
+                            </td>
+
+                            <td>
+                                S/ {{ detalle.precio_unitario }}
+                            </td>
+
+                            <td>
+                                {{ detalle.cantidad }}
+                            </td>
+
+                            <td>
+                                Und
+                            </td>
+
+                            <td>
+                                S/ {{ detalle.subtotal }}
+                            </td>
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+                            <td colspan="13" class="text-center text-muted py-4">
+                                No hay detalles de venta registrados.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

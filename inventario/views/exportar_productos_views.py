@@ -9,7 +9,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
 from inventario.models import ConfiguracionEmpresa, StockBodega
 from core.services.pdf_empresa_service import agregar_cabecera_empresa
-from usuarios.decorators import administrador_required
+from usuarios.decorators import vendedor_required
 
 
 def obtener_stocks_exportar():
@@ -24,7 +24,7 @@ def obtener_stocks_exportar():
     )
 
 
-@administrador_required
+@vendedor_required
 def preview_exportar_productos(request):
     stocks = obtener_stocks_exportar()
 
@@ -37,7 +37,7 @@ def preview_exportar_productos(request):
     )
 
 
-@administrador_required
+@vendedor_required
 def exportar_productos_excel(request):
     stocks = obtener_stocks_exportar()
 
@@ -80,7 +80,7 @@ def exportar_productos_excel(request):
     return response
 
 
-@administrador_required
+@vendedor_required
 def exportar_productos_pdf(request):
     stocks = obtener_stocks_exportar()
 

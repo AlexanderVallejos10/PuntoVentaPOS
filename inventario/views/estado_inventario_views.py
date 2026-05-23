@@ -4,10 +4,9 @@ from django.shortcuts import render
 from django.db.models import Q
 from inventario.models import Sede
 from inventario.models import StockBodega
-from usuarios.decorators import vendedor_required
+from django.contrib.auth.decorators import login_required
 
-
-@vendedor_required
+@login_required
 def estado_inventario(request):
     sede_id = request.GET.get('sede', '')
     buscar = request.GET.get('buscar', '').strip()

@@ -1,0 +1,99 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Cerrar Caja
+{% endblock %}
+
+{% block content %}
+
+<div class="page-card" style="max-width: 650px;">
+
+    <h2 class="fw-bold mb-4">
+        Cerrar Caja
+    </h2>
+
+    <p>
+        <strong>Caja:</strong>
+        {{ apertura.caja.nombre }}
+    </p>
+
+    <p>
+        <strong>Sede:</strong>
+        {{ apertura.caja.sede.nombre }}
+    </p>
+
+    <p>
+        <strong>Turno:</strong>
+        {{ apertura.get_turno_display }}
+    </p>
+
+    <p>
+        <strong>Monto inicial:</strong>
+        S/ {{ apertura.monto_inicial }}
+    </p>
+
+    <p>
+        <strong>Monto esperado:</strong>
+        S/ {{ monto_esperado }}
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">
+                Monto contado en caja
+            </label>
+
+            <input
+                type="number"
+                step="0.01"
+                name="monto_contado"
+                id="montoContado"
+                class="form-control"
+                required
+                oninput="calcularDiferencia()"
+            >
+        </div>
+
+        <div class="alert alert-info mt-3">
+            <strong>Resultado:</strong>
+            <span id="resultadoCaja">
+                Ingrese el monto contado.
+            </span>
+        </div>
+
+        <button class="btn btn-danger">
+            Cerrar Caja
+        </button>
+
+    </form>
+
+</div>
+
+<script>
+const montoEsperado = Number("{{ monto_esperado|floatformat:2 }}".replace(",", "."));
+
+function calcularDiferencia() {
+    const input = document.getElementById('montoContado');
+    const resultado = document.getElementById('resultadoCaja');
+
+    const contado = Number(input.value || 0);
+    const diferencia = contado - montoEsperado;
+
+    if (!input.value) {
+        resultado.innerText = 'Ingrese el monto contado.';
+        return;
+    }
+
+    if (diferencia === 0) {
+        resultado.innerText = 'Caja exacta. No hay diferencia.';
+    } else if (diferencia > 0) {
+        resultado.innerText = 'Sobra dinero: S/ ' + diferencia.toFixed(2);
+    } else {
+        resultado.innerText = 'Falta dinero: S/ ' + Math.abs(diferencia).toFixed(2);
+    }
+}
+</script>
+
+{% endblock %}

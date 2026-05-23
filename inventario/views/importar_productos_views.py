@@ -11,7 +11,7 @@ from inventario.models import Sede
 from inventario.models import StockBodega
 from productos.models import Categoria
 from productos.models import Producto
-from usuarios.decorators import administrador_required
+from usuarios.decorators import vendedor_required
 
 
 def generar_codigo_producto():
@@ -25,7 +25,7 @@ def generar_codigo_producto():
     return f'PROD-{numero:06d}'
 
 
-@administrador_required
+@vendedor_required
 def importar_productos_excel(request):
 
     if request.method == 'POST':
@@ -149,7 +149,7 @@ def importar_productos_excel(request):
     )
 
 
-@administrador_required
+@vendedor_required
 def descargar_formato_productos(request):
     workbook = openpyxl.Workbook()
     hoja = workbook.active

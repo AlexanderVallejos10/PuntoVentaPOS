@@ -1,10 +1,9 @@
 from django.shortcuts import render
 
 from productos.models import Categoria
-from usuarios.decorators import administrador_required
+from django.contrib.auth.decorators import login_required
 
-
-@administrador_required
+@login_required
 def categoria_inventario_list(request):
     buscar = request.GET.get('buscar', '').strip()
 

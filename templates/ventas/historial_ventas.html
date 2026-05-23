@@ -1,0 +1,343 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+Historial de ventas
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .page-title {
+        text-align: center;
+        font-size: 44px;
+        font-weight: 800;
+        margin-bottom: 35px;
+    }
+
+    .historial-card {
+        background: white;
+        border-radius: 18px;
+        padding: 28px;
+        box-shadow: 0 4px 18px rgba(0,0,0,.06);
+    }
+
+    .tabla-historial {
+        font-size: 14px;
+    }
+
+    .tabla-historial th {
+        background: #f1f3f5;
+        font-weight: 800;
+        text-align: center;
+        vertical-align: middle;
+        padding: 12px 8px;
+    }
+
+    .tabla-historial td {
+        vertical-align: middle;
+        padding: 10px 8px;
+        text-align: center;
+    }
+
+    .accion-icon {
+        font-size: 20px;
+        margin: 0 4px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .estado-pagada {
+        background: #6c757d;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 12px;
+    }
+
+    .estado-devuelta {
+        background: #0dcaf0;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 12px;
+    }
+
+    .estado-anulada {
+        background: #dc3545;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 12px;
+    }
+</style>
+
+<div class="container-fluid px-4">
+
+    <h1 class="page-title">
+        Historial de ventas - Recibos
+    </h1>
+
+    <div class="historial-card">
+
+        <form method="get">
+            <div class="row align-items-end mb-4">
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">
+                        Estado
+                    </label>
+                    <select name="estado" class="form-select">
+                        <option value="">TODOS</option>
+                        <option value="PAGADA" {% if estado == 'PAGADA' %}selected{% endif %}>PAGADA</option>
+                        <option value="DEVUELTA" {% if estado == 'DEVUELTA' %}selected{% endif %}>DEVUELTA</option>
+                        <option value="ANULADA" {% if estado == 'ANULADA' %}selected{% endif %}>ANULADA</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">
+                        Buscar
+                    </label>
+                    <input
+                        type="text"
+                        name="buscar"
+                        class="form-control"
+                        placeholder="Buscar por cliente, código o sede"
+                        value="{{ buscar }}"
+                    >
+                </div>
+
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100">
+                        Consultar
+                    </button>
+                </div>
+
+                <div class="col-md-3 text-end">
+                    <div class="mb-2">
+                        Exportar
+                    </div>
+
+                    <a
+                        href="{% url 'ventas:exportar_historial_ventas_excel' %}?estado={{ estado }}&buscar={{ buscar }}"
+                        class="btn btn-outline-success"
+                        title="Exportar Excel"
+                    >
+                        <i class="bi bi-file-earmark-excel"></i>
+                    </a>
+
+                    <a
+                        href="{% url 'ventas:exportar_historial_ventas_pdf' %}?estado={{ estado }}&buscar={{ buscar }}"
+                        class="btn btn-outline-danger"
+                        title="Exportar PDF"
+                    >
+                        <i class="bi bi-file-earmark-pdf"></i>
+                    </a>
+                </div>
+
+            </div>
+        </form>
+
+        <div class="table-responsive">
+
+            <table class="table tabla-historial align-middle">
+
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Factura</th>
+                        <th>Fecha y hora</th>
+                        <th>Cliente</th>
+                        <th>Sede</th>
+                        <th>Caja</th>
+                        <th>Vendedor</th>
+                        <th>Método</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for venta in ventas %}
+
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+
+                        <td>
+                            {{ venta.id|stringformat:"06d" }}
+                        </td>
+
+                        <td>
+                            {{ venta.created|date:"d/m/Y H:i" }}
+                        </td>
+
+                        <td class="text-start">
+                            {{ venta.cliente.nombre|default:"Cliente general"|upper }}
+                        </td>
+
+                        <td>
+                            {{ venta.sede.nombre|default:"-" }}
+                        </td>
+
+                        <td>
+                            {% if venta.movimiento_caja %}
+                                {{ venta.movimiento_caja.apertura.caja.nombre }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if venta.movimiento_caja %}
+                                {{ venta.movimiento_caja.apertura.usuario.username|upper }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ venta.metodo_pago }}
+                        </td>
+
+                        <td>
+                            S/ {{ venta.total }}
+                        </td>
+
+                        <td>
+                            {% if venta.estado == 'PAGADA' %}
+                                <span class="estado-pagada">PAGADA</span>
+                            {% elif venta.estado == 'DEVUELTA' %}
+                                <span class="estado-devuelta">DEVUELTA</span>
+                            {% elif venta.estado == 'ANULADA' %}
+                                <span class="estado-anulada">ANULADA</span>
+                            {% else %}
+                                <span class="estado-pagada">{{ venta.estado }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+
+                            <a
+                                href="{% url 'ventas:imprimir_ticket' venta.id %}"
+                                target="_blank"
+                                class="accion-icon text-dark"
+                                title="Imprimir"
+                            >
+                                <i class="bi bi-printer"></i>
+                            </a>
+
+                            <a
+                                href="{% url 'ventas:enviar_factura_correo' venta.id %}"
+                                class="accion-icon text-primary"
+                                title="Enviar correo"
+                            >
+                                <i class="bi bi-envelope-fill"></i>
+                            </a>
+
+                            <button
+                                class="btn btn-link p-0 accion-icon text-success btn-devolver"
+                                data-id="{{ venta.id }}"
+                                title="Devolver"
+                                {% if venta.estado == 'ANULADA' or venta.estado == 'DEVUELTA' %}disabled{% endif %}
+                            >
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+
+                            <a
+                                href="{% url 'ventas:editar_venta' venta.id %}"
+                                class="accion-icon text-primary"
+                                title="Editar"
+                            >
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+
+                            <button
+                                class="btn btn-link p-0 accion-icon text-danger btn-eliminar"
+                                data-id="{{ venta.id }}"
+                                title="Eliminar"
+                                {% if venta.estado == 'ANULADA' or venta.estado == 'DEVUELTA' %}disabled{% endif %}
+                            >
+                                <i class="bi bi-trash"></i>
+                            </button>
+
+                        </td>
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="11" class="text-center text-muted py-4">
+                            No hay ventas registradas.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+document.querySelectorAll('.btn-eliminar').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const ventaId = this.dataset.id;
+
+        if (!confirm('¿Anular esta venta? Se devolverá el stock y se descontará de caja.')) {
+            return;
+        }
+
+        fetch(`/ventas/historial/eliminar/${ventaId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.mensaje);
+
+            if (data.ok) {
+                location.reload();
+            }
+        });
+    });
+});
+
+document.querySelectorAll('.btn-devolver').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const ventaId = this.dataset.id;
+
+        if (!confirm('¿Devolver esta venta? Se restaurará stock y saldrá dinero de caja.')) {
+            return;
+        }
+
+        fetch(`/ventas/historial/devolver/${ventaId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.mensaje);
+
+            if (data.ok) {
+                location.reload();
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}

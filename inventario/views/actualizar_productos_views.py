@@ -10,10 +10,9 @@ from inventario.models import Sede
 from inventario.models import StockBodega
 from productos.models import Categoria
 from productos.models import Producto
-from usuarios.decorators import administrador_required
+from django.contrib.auth.decorators import login_required
 
-
-@administrador_required
+@login_required
 def actualizar_productos_excel(request):
 
     if request.method == 'POST':

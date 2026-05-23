@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'compras',
     'gastos',
     'django_recaptcha',
+    'django.contrib.humanize',
 ]
 
 # settings.py

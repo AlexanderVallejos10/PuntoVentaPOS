@@ -302,20 +302,67 @@
  </style>
 
 {% if sede_actual %}
-    <div class="alert alert-primary py-2 d-flex justify-content-between align-items-center">
+    <div class="alert alert-primary py-2 d-flex justify-content-between align-items-center mb-3">
+
         <div>
-            Vendiendo en sede:
-            <strong>{{ sede_actual.nombre|upper }}</strong>
+            <strong>Vendiendo en sede:</strong>
+            {{ sede_actual.nombre|upper }}
+
+            {% if apertura_caja %}
+                <span class="mx-2">|</span>
+
+                <strong>Caja:</strong>
+                {{ apertura_caja.caja.nombre }}
+
+                <span class="mx-2">|</span>
+
+                <strong>Turno:</strong>
+                {{ apertura_caja.get_turno_display }}
+
+                <span class="mx-2">|</span>
+
+                <strong>Monto inicial:</strong>
+                S/ {{ apertura_caja.monto_inicial }}
+
+                <span class="mx-2">|</span>
+
+                <strong>Monto actual:</strong>
+                <span class="text-success fw-bold">
+                    S/ {{ monto_actual_caja }}
+                </span>
+
+                <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm ms-3"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalDetalleCaja"
+                >
+                    Detalle caja
+                </button>
+            {% endif %}
         </div>
 
-        {% if es_admin_o_super %}
-            <a
-                href="{% url 'ventas:seleccionar_sede_pos' %}"
-                class="btn btn-primary btn-sm px-4"
-            >
-                Cambiar
-            </a>
-        {% endif %}
+        <div class="d-flex gap-2">
+
+
+            {% if apertura_caja %}
+                <a
+                    href="{% url 'ventas:cerrar_caja' %}"
+                    class="btn btn-danger btn-sm px-3"
+                >
+                    Cerrar caja
+                </a>
+            {% else %}
+                <a
+                    href="{% url 'ventas:abrir_caja' %}"
+                    class="btn btn-success btn-sm px-3"
+                >
+                    Abrir caja
+                </a>
+            {% endif %}
+
+        </div>
+
     </div>
 {% endif %}
 
@@ -594,14 +641,6 @@
 
             <div class="acciones-grid">
 
-                <button class="btn btn-outline-success btn-accion">
-                    Cotizar
-                </button>
-
-                <button class="btn btn-outline-info btn-accion">
-                    Preventa
-                </button>
-
                 <a
                     href="{% url 'ventas:guardar_venta_espera' %}"
                     class="btn btn-outline-primary btn-accion"
@@ -670,5 +709,108 @@
 </script>
 
 {% include 'ventas/components/modal_pago.html' %}
+
+
+<div class="modal fade" id="modalDetalleCaja" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    Detalle de caja
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal"
+                ></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="row mb-3">
+
+                    <div class="col-md-4">
+                        <div class="alert alert-info">
+                            <strong>Monto inicial</strong><br>
+                            S/ {{ apertura_caja.monto_inicial }}
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="alert alert-success">
+                            <strong>Monto actual</strong><br>
+                            S/ {{ monto_actual_caja }}
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="alert alert-primary">
+                            <strong>Turno</strong><br>
+                            {{ apertura_caja.get_turno_display }}
+                        </div>
+                    </div>
+
+                </div>
+
+                <table class="table table-sm table-bordered align-middle">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for mov in movimientos_caja %}
+                            <tr>
+                                <td>
+                                    {{ mov.created|date:"d/m/Y H:i" }}
+                                </td>
+
+                                <td>
+                                    {% if mov.tipo == 'INGRESO' %}
+                                        <span class="badge bg-success">
+                                            Ingreso
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger">
+                                            Salida
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ mov.concepto }}
+                                </td>
+
+                                <td>
+                                    S/ {{ mov.monto }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    Aún no hay movimientos en esta caja.
+                                </td>
+                            </tr>
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
 
 {% endblock %}

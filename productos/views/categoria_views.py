@@ -5,10 +5,12 @@ from django.shortcuts import render
 
 from productos.forms import CategoriaForm
 from productos.models import Categoria
-from usuarios.decorators import administrador_required
+from django.contrib.auth.decorators import login_required
+
+from usuarios.decorators import vendedor_required
 
 
-@administrador_required
+@login_required
 def categoria_create(request):
     form = CategoriaForm(request.POST or None)
 
@@ -33,7 +35,7 @@ def categoria_create(request):
     )
 
 
-@administrador_required
+@login_required
 def categoria_update(request, pk):
     categoria = get_object_or_404(
         Categoria,
@@ -66,7 +68,7 @@ def categoria_update(request, pk):
     )
 
 
-@administrador_required
+@login_required
 def categoria_delete(request, pk):
     categoria = get_object_or_404(
         Categoria,

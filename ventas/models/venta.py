@@ -8,6 +8,7 @@ class Venta(models.Model):
         ('PAGADA', 'Pagada'),
         ('ESPERA', 'Espera'),
         ('ANULADA', 'Anulada'),
+        ('DEVUELTA', 'Devuelta'),
     )
 
     METODOS_PAGO = (

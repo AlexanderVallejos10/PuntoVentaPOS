@@ -1,6 +1,6 @@
 from django.urls import path
 
-from productos.views.producto_views import producto_list
+from productos.views.producto_views import imprimir_barcode_producto, producto_list
 from productos.views.producto_views import producto_create
 from productos.views.producto_views import producto_update
 from productos.views.producto_views import producto_delete
@@ -20,4 +20,5 @@ urlpatterns = [
     path('categorias/nueva/',categoria_create,name='categoria_create'),
     path('categorias/editar/<int:pk>/',categoria_update,name='categoria_update'),
     path('categorias/eliminar/<int:pk>/',categoria_delete,name='categoria_delete'),
+    path('productos/<int:producto_id>/barcode/',imprimir_barcode_producto,name='imprimir_barcode_producto'),
 ]

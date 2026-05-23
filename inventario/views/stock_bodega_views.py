@@ -6,7 +6,7 @@ from django.shortcuts import render
 from inventario.forms import StockBodegaForm
 from inventario.models import StockBodega
 from productos.models import Producto
-from usuarios.decorators import administrador_required
+from usuarios.decorators import vendedor_required
 
 
 def generar_codigo_producto():
@@ -20,7 +20,7 @@ def generar_codigo_producto():
     return f'PROD-{numero:06d}'
 
 
-@administrador_required
+@vendedor_required
 def stock_bodega_create(request):
     form = StockBodegaForm(request.POST or None)
 
@@ -65,7 +65,7 @@ def stock_bodega_create(request):
     )
 
 
-@administrador_required
+@vendedor_required
 def stock_bodega_update(request, pk):
     stock_bodega = get_object_or_404(
         StockBodega,
@@ -122,7 +122,7 @@ def stock_bodega_update(request, pk):
         }
     )
 
-@administrador_required
+@vendedor_required
 def stock_bodega_delete(request, pk):
     stock_bodega = get_object_or_404(
         StockBodega,

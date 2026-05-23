@@ -1,85 +1,525 @@
 {% extends 'base/base.html' %}
 
-
 {% block title %}
-    Dashboard POS
+Dashboard POS
 {% endblock %}
 
-
 {% block content %}
-<div class="page-card">
 
-    <h1 class="mb-4">
+<style>
+    .dashboard-wrapper {
+        padding: 20px 28px;
+    }
 
-        Dashboard PuntoVentaPOS
+    .top-alerts {
+        display: flex;
+        gap: 40px;
+        font-weight: bold;
+        color: #0052a5;
+        margin-bottom: 24px;
+    }
 
-    </h1>
+    .alert-count {
+        background: #dc3545;
+        color: white;
+        border-radius: 50px;
+        padding: 2px 8px;
+        font-size: 12px;
+    }
 
-    <div class="row">
+    .btn-ventas {
+        background: #235aa6;
+        color: white;
+        font-weight: bold;
+        padding: 14px 32px;
+        border-radius: 6px;
+        text-decoration: none;
+    }
 
-        <div class="col-md-4">
+    .dash-card {
+        background: white;
+        border-radius: 8px;
+        padding: 24px;
+        box-shadow: 0 3px 14px rgba(0,0,0,.08);
+        min-height: 120px;
+    }
 
-            <div class="card shadow-sm">
+    .dash-title {
+        color: #666;
+        font-size: 17px;
+        margin-bottom: 10px;
+    }
 
-                <div class="card-body">
+    .dash-value {
+        font-size: 26px;
+        font-weight: bold;
+        color: #000;
+    }
 
-                    <h5 class="card-title">
-                        Productos
-                    </h5>
+    .chart-card {
+        background: white;
+        border-radius: 8px;
+        padding: 22px;
+        box-shadow: 0 3px 14px rgba(0,0,0,.08);
+    }
 
-                    <p class="card-text">
-                        Gestión de productos del sistema.
-                    </p>
+    .chart-title {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+</style>
 
-                </div>
+<div class="dashboard-wrapper">
 
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div class="top-alerts">
+
+            <div
+                data-bs-toggle="modal"
+                data-bs-target="#modalBajoStock"
+                style="cursor:pointer;"
+            >
+                Productos con bajo stock
+                <span class="alert-count">
+                    {{ productos_bajo_stock }}
+                </span>
+            </div>
+
+            <div
+                data-bs-toggle="modal"
+                data-bs-target="#modalCajasAbiertas"
+                style="cursor:pointer;"
+            >
+                Cajas abiertas
+                <span class="alert-count">
+                    {{ cajas_abiertas|length }}
+                </span>
+            </div>
+
+            <div>
+                Devoluciones del día
+                <span class="alert-count">
+                    S/ {{ devoluciones_dia|floatformat:2 }}
+                </span>
             </div>
 
         </div>
 
-        <div class="col-md-4">
+        <a href="{% url 'ventas:abrir_caja' %}" class="btn-ventas">
+            Realizar Ventas
+        </a>
 
-            <div class="card shadow-sm">
+    </div>
 
-                <div class="card-body">
+    <!-- Tarjetas del día -->
+    <div class="row g-4 mb-4">
 
-                    <h5 class="card-title">
-                        Ventas
-                    </h5>
-
-                    <p class="card-text">
-                        Gestión de ventas y comprobantes.
-                    </p>
-
-                </div>
-
+        <div class="col-md">
+            <div class="dash-card">
+                <div class="dash-title">Número de ventas</div>
+                <div class="dash-value"># {{ numero_facturas }}</div>
             </div>
-
         </div>
 
-        <div class="col-md-4">
-
-            <div class="card shadow-sm">
-
-                <div class="card-body">
-
-                    <h5 class="card-title">
-                        Clientes
-                    </h5>
-
-                    <p class="card-text">
-                        Gestión de clientes.
-                    </p>
-
-                </div>
-
+        <div class="col-md">
+            <div class="dash-card">
+                <div class="dash-title">Ventas del día</div>
+                <div class="dash-value">S/ {{ ventas_dia|floatformat:2 }}</div>
             </div>
+        </div>
 
+        <div class="col-md">
+            <div class="dash-card">
+                <div class="dash-title">Devoluciones / anulaciones</div>
+                <div class="dash-value">S/ {{ devoluciones_dia|floatformat:2 }}</div>
+            </div>
+        </div>
+
+        <div class="col-md">
+            <div class="dash-card">
+                <div class="dash-title">Inicio de caja</div>
+                <div class="dash-value">S/ {{ inicio_caja|floatformat:2 }}</div>
+            </div>
+        </div>
+
+        <div class="col-md">
+            <div class="dash-card">
+                <div class="dash-title">Estado de caja</div>
+                <div class="dash-value">S/ {{ estado_caja|floatformat:2 }}</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Tarjetas resumen general -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-3">
+            <div class="dash-card">
+                <div class="dash-title">Ventas históricas</div>
+                <div class="dash-value"># {{ numero_facturas_general }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="dash-card">
+                <div class="dash-title">Total vendido general</div>
+                <div class="dash-value text-success">
+                    S/ {{ ventas_general|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="dash-card">
+                <div class="dash-title">Devoluciones históricas</div>
+                <div class="dash-value text-danger">
+                    S/ {{ devoluciones_general|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="dash-card">
+                <div class="dash-title">Ganancia general</div>
+                <div class="dash-value text-primary">
+                    S/ {{ ganancia_general|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Resumen de cajas del día -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-12">
+            <div class="chart-card">
+                <div class="chart-title">RESUMEN DE CAJAS DEL DÍA</div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Caja</th>
+                                <th>Sede</th>
+                                <th>Vendedor</th>
+                                <th>Turno</th>
+                                <th>Inicial</th>
+                                <th>Ingresos</th>
+                                <th>Egresos</th>
+                                <th>Esperado</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for caja in resumen_cajas %}
+                                <tr>
+                                    <td>{{ caja.caja }}</td>
+                                    <td>{{ caja.sede }}</td>
+                                    <td>{{ caja.vendedor }}</td>
+                                    <td>{{ caja.turno }}</td>
+                                    <td>S/ {{ caja.monto_inicial }}</td>
+                                    <td class="text-success fw-bold">S/ {{ caja.ingresos }}</td>
+                                    <td class="text-danger fw-bold">S/ {{ caja.egresos }}</td>
+                                    <td class="fw-bold">S/ {{ caja.esperado }}</td>
+                                    <td>
+                                        {% if caja.estado == 'ABIERTA' %}
+                                            <span class="badge bg-success">ABIERTA</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">CERRADA</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted">
+                                        No hay movimientos de caja hoy.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Gráficos: ventas mensuales + ventas por sede -->
+    <div class="row g-4">
+
+        <div class="col-md-7">
+            <div class="chart-card">
+                <div class="chart-title">VENTAS MENSUALES</div>
+                <canvas id="ventasMensuales"></canvas>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="chart-card">
+                <div class="chart-title">VENTAS POR SEDE</div>
+                <canvas id="clientesNuevos"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Cajas abiertas (fila propia) -->
+    <div class="row g-4 mt-4">
+
+        <div class="col-12">
+            <div class="chart-card">
+                <div class="chart-title">CAJAS ABIERTAS</div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Caja</th>
+                                <th>Sede</th>
+                                <th>Usuario</th>
+                                <th>Turno</th>
+                                <th>Inicial</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for apertura in cajas_abiertas %}
+                                <tr>
+                                    <td>{{ apertura.caja.nombre }}</td>
+                                    <td>{{ apertura.caja.sede.nombre }}</td>
+                                    <td>{{ apertura.usuario.username }}</td>
+                                    <td>{{ apertura.get_turno_display }}</td>
+                                    <td>S/ {{ apertura.monto_inicial }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">
+                                        No hay cajas abiertas.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Ventas del mes día a día -->
+    <div class="row g-4 mt-4">
+
+        <div class="col-12">
+            <div class="chart-card">
+                <div class="chart-title">VENTAS DEL MES (DÍA A DÍA)</div>
+                <canvas id="ventasMes"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Productos más vendidos -->
+    <div class="row g-4 mt-4">
+
+        <div class="col-12">
+            <div class="chart-card">
+                <div class="chart-title">PRODUCTOS MÁS VENDIDOS</div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Total vendido</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in productos_top %}
+                                <tr>
+                                    <td>{{ producto.producto__nombre }}</td>
+                                    <td>{{ producto.total_cantidad }}</td>
+                                    <td>S/ {{ producto.total_vendido }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">
+                                        No hay productos vendidos.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
     </div>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const meses = [
+    'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+    'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+];
+
+new Chart(document.getElementById('ventasMensuales'), {
+    type: 'bar',
+    data: {
+        labels: meses,
+        datasets: [{
+            label: 'Ventas',
+            data: {{ ventas_mensuales|safe }}
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true
+    }
+});
+
+new Chart(document.getElementById('clientesNuevos'), {
+    type: 'pie',
+    data: {
+        labels: {{ ventas_sede_labels|safe }},
+        datasets: [{
+            label: 'Ventas por sede',
+            data: {{ ventas_sede_data|safe }}
+        }]
+    },
+    options: {
+        responsive: true
+    }
+});
+
+new Chart(document.getElementById('ventasMes'), {
+    type: 'line',
+    data: {
+        labels: {{ dias_mes_labels|safe }},
+        datasets: [{
+            label: 'Ventas del mes',
+            data: {{ dias_mes_data|safe }},
+            fill: true,
+            tension: .4
+        }]
+    },
+    options: {
+        responsive: true
+    }
+});
+</script>
+
+<!-- Modal: Productos con bajo stock -->
+<div class="modal fade" id="modalBajoStock" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    Productos con bajo stock
+                </h5>
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal"
+                ></button>
+            </div>
+
+            <div class="modal-body">
+                <table class="table table-sm table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos_bajo_stock_lista %}
+                            <tr>
+                                <td>{{ producto.codigo }}</td>
+                                <td>{{ producto.nombre }}</td>
+                                <td>{{ producto.categoria.nombre }}</td>
+                                <td>
+                                    <span class="badge bg-danger">
+                                        {{ producto.stock }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    No hay productos con bajo stock.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Cajas abiertas -->
+<div class="modal fade" id="modalCajasAbiertas" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    Cajas abiertas
+                </h5>
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal"
+                ></button>
+            </div>
+
+            <div class="modal-body">
+                <table class="table table-sm table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Caja</th>
+                            <th>Sede</th>
+                            <th>Vendedor</th>
+                            <th>Turno</th>
+                            <th>Monto inicial</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for apertura in cajas_abiertas %}
+                            <tr>
+                                <td>{{ apertura.caja.nombre }}</td>
+                                <td>{{ apertura.caja.sede.nombre }}</td>
+                                <td>{{ apertura.usuario.username }}</td>
+                                <td>{{ apertura.get_turno_display }}</td>
+                                <td>S/ {{ apertura.monto_inicial }}</td>
+                                <td>
+                                    <span class="badge bg-success">
+                                        ABIERTA
+                                    </span>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">
+                                    No hay cajas abiertas.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
 
 {% endblock %}
