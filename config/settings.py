@@ -1,18 +1,28 @@
 from pathlib import Path
+
+from decouple import Csv
 from decouple import config
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', cast=bool, default=True)
 
-DEBUG = config('DEBUG', cast=bool, default=False)
+DEFAULT_SECRET_KEY = 'django-insecure-dev-only-secret-key'
+SECRET_KEY = config('SECRET_KEY', default=DEFAULT_SECRET_KEY)
+
+if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
+    raise ImproperlyConfigured(
+        'SECRET_KEY debe configurarse cuando DEBUG=False.'
+    )
 
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='localhost,127.0.0.1'
-).split(',')
+    cast=Csv(),
+    default='localhost,127.0.0.1,0.0.0.0,web'
+)
 
 
 # Application definition
@@ -36,9 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
 ]
 
-# settings.py
-RECAPTCHA_PUBLIC_KEY  = '6LfvAPcsAAAAALsIjdM_zGllMnyl7Ezj8OI5dWan'
-RECAPTCHA_PRIVATE_KEY = '6LfvAPcsAAAAABxM-GUog9-7VzkCYXn4dx5uR4Mg'
+RECAPTCHA_PUBLIC_KEY = config('RECAPTCHA_PUBLIC_KEY', default='')
+RECAPTCHA_PRIVATE_KEY = config('RECAPTCHA_PRIVATE_KEY', default='')
+RECAPTCHA_ENABLED = config('RECAPTCHA_ENABLED', cast=bool, default=not DEBUG)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -75,16 +85,26 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': config('DB_ENGINE'),
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
+DB_ENGINE = config('DB_ENGINE', default='django.db.backends.sqlite3')
+
+if DB_ENGINE == 'django.db.backends.sqlite3':
+    DATABASES = {
+        'default': {
+            'ENGINE': DB_ENGINE,
+            'NAME': config('DB_NAME', default=BASE_DIR / 'db.sqlite3'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': DB_ENGINE,
+            'NAME': config('DB_NAME', default='puntoventapos'),
+            'USER': config('DB_USER', default='puntoventapos'),
+            'PASSWORD': config('DB_PASSWORD', default='puntoventapos'),
+            'HOST': config('DB_HOST', default='db'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -119,9 +139,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATIC_URL = 'static/'
 
+STATIC_DIR = BASE_DIR / 'static'
+
 STATICFILES_DIRS = [
-    BASE_DIR / 'static'
-]
+    STATIC_DIR
+] if STATIC_DIR.exists() else []
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -132,6 +154,4 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
-
-LOGIN_REDIRECT_URL = '/ventas/'
-LOGOUT_REDIRECT_URL = '/login/'
+LOGOUT_REDIRECT_URL = 'login'

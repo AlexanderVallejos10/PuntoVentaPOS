@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV2Checkbox
 
@@ -23,6 +24,10 @@ class LoginForm(forms.Form):
         )
     )
 
-    captcha = ReCaptchaField(
-        widget=ReCaptchaV2Checkbox
-    )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if settings.RECAPTCHA_ENABLED:
+            self.fields['captcha'] = ReCaptchaField(
+                widget=ReCaptchaV2Checkbox
+            )
