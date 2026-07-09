@@ -1,7 +1,8 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect, render
+from django.db.models import Count, Sum
+from django.shortcuts import redirect, render
 
 from usuarios.models import UsuarioSede
 from usuarios.decorators import vendedor_required
@@ -64,31 +65,75 @@ def abrir_caja(request):
             'nombre'
         )
 
-    cajas_ocupadas = AperturaCaja.objects.filter(
-        estado='ABIERTA'
-    ).values_list(
-        'caja_id',
-        flat=True
+    cajas = list(cajas)
+
+    cajas_ocupadas = list(
+        AperturaCaja.objects.filter(
+            estado='ABIERTA'
+        ).values_list(
+            'caja_id',
+            flat=True
+        )
+    )
+
+    caja_inicial_id = next(
+        (caja.id for caja in cajas if caja.id not in cajas_ocupadas),
+        None
     )
 
     if request.method == 'POST':
         caja_id = request.POST.get('caja')
         turno = request.POST.get('turno')
-        monto_inicial = request.POST.get('monto_inicial') or 0
+        monto_inicial = request.POST.get('monto_inicial') or '0'
 
-        caja = get_object_or_404(
-            Caja,
-            id=caja_id,
-            activa=True
+        if not caja_id:
+            messages.error(
+                request,
+                'Selecciona una caja disponible.'
+            )
+            return redirect('ventas:abrir_caja')
+
+        caja = next(
+            (item for item in cajas if str(item.id) == str(caja_id)),
+            None
         )
 
-        if AperturaCaja.objects.filter(
-            caja=caja,
-            estado='ABIERTA'
-        ).exists():
+        if not caja:
+            messages.error(
+                request,
+                'La caja seleccionada no está disponible para tu usuario.'
+            )
+            return redirect('ventas:abrir_caja')
+
+        if caja.id in cajas_ocupadas:
             messages.error(
                 request,
                 'Esta caja ya está ocupada.'
+            )
+            return redirect('ventas:abrir_caja')
+
+        turnos_validos = dict(AperturaCaja.TURNO_CHOICES)
+
+        if turno not in turnos_validos:
+            messages.error(
+                request,
+                'Selecciona un turno válido.'
+            )
+            return redirect('ventas:abrir_caja')
+
+        try:
+            monto_inicial = Decimal(str(monto_inicial))
+        except (InvalidOperation, TypeError):
+            messages.error(
+                request,
+                'El monto inicial no es válido.'
+            )
+            return redirect('ventas:abrir_caja')
+
+        if monto_inicial < 0:
+            messages.error(
+                request,
+                'El monto inicial no puede ser negativo.'
             )
             return redirect('ventas:abrir_caja')
 
@@ -96,7 +141,7 @@ def abrir_caja(request):
             caja=caja,
             usuario=request.user,
             turno=turno,
-            monto_inicial=Decimal(str(monto_inicial))
+            monto_inicial=monto_inicial
         )
 
         messages.success(
@@ -111,9 +156,11 @@ def abrir_caja(request):
         'ventas/caja/abrir_caja.html',
         {
             'cajas': cajas,
-            'cajas_ocupadas': list(cajas_ocupadas),
+            'cajas_ocupadas': cajas_ocupadas,
+            'caja_inicial_id': caja_inicial_id,
         }
     )
+
 
 @vendedor_required
 def cerrar_caja(request):
@@ -129,10 +176,74 @@ def cerrar_caja(request):
             'ventas:abrir_caja'
         )
 
-    monto_esperado = apertura.calcular_monto_esperado()
+    ingresos = apertura.movimientos.filter(tipo='INGRESO').aggregate(
+        total=Sum('monto'),
+        cantidad=Count('id')
+    )
+
+    salidas = apertura.movimientos.filter(tipo='SALIDA').aggregate(
+        total=Sum('monto'),
+        cantidad=Count('id')
+    )
+
+    ingresos_total = ingresos.get('total') or Decimal('0.00')
+    salidas_total = salidas.get('total') or Decimal('0.00')
+    ingresos_count = ingresos.get('cantidad') or 0
+    salidas_count = salidas.get('cantidad') or 0
+    monto_esperado = apertura.monto_inicial + ingresos_total - salidas_total
+
+    contexto = {
+        'apertura': apertura,
+        'ingresos': ingresos_total,
+        'salidas': salidas_total,
+        'ingresos_total': ingresos_total,
+        'salidas_total': salidas_total,
+        'ingresos_count': ingresos_count,
+        'salidas_count': salidas_count,
+        'movimientos_count': ingresos_count + salidas_count,
+        'monto_esperado': monto_esperado,
+        'monto_esperado_js': format(monto_esperado, '.2f'),
+    }
 
     if request.method == 'POST':
-        monto_contado = request.POST.get('monto_contado') or 0
+        monto_contado = request.POST.get('monto_contado')
+
+        if monto_contado in (None, ''):
+            messages.error(
+                request,
+                'Ingresa el monto contado en caja.'
+            )
+            return render(
+                request,
+                'ventas/caja/cerrar_caja.html',
+                contexto
+            )
+
+        try:
+            monto_contado = Decimal(
+                str(monto_contado).replace(',', '.')
+            )
+        except (InvalidOperation, TypeError):
+            messages.error(
+                request,
+                'El monto contado no es válido.'
+            )
+            return render(
+                request,
+                'ventas/caja/cerrar_caja.html',
+                contexto
+            )
+
+        if monto_contado < 0:
+            messages.error(
+                request,
+                'El monto contado no puede ser negativo.'
+            )
+            return render(
+                request,
+                'ventas/caja/cerrar_caja.html',
+                contexto
+            )
 
         apertura.cerrar(
             monto_contado
@@ -150,8 +261,5 @@ def cerrar_caja(request):
     return render(
         request,
         'ventas/caja/cerrar_caja.html',
-        {
-            'apertura': apertura,
-            'monto_esperado': monto_esperado
-        }
+        contexto
     )

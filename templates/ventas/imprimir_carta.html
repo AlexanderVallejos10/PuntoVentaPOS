@@ -1,246 +1,82 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Factura #{{ venta.id }}</title>
-
+    <meta charset="utf-8">
+    <title>{{ venta.comprobante_nombre }} {{ venta.comprobante_codigo }}</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: white;
-            color: #000;
-            font-size: 12px;
-        }
-
-        .page {
-            width: 210mm;
-            min-height: 297mm;
-            margin: auto;
-            padding: 18mm;
-        }
-
-        .top {
-            display: grid;
-            grid-template-columns: 1fr 170px;
-            gap: 20px;
-            align-items: start;
-        }
-
-        .empresa {
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .empresa-logo {
-            max-height: 75px;
-            max-width: 210px;
-            object-fit: contain;
-            margin-bottom: 8px;
-        }
-
-        .empresa h2 {
-            margin: 5px 0;
-            font-size: 22px;
-        }
-
-        .empresa div {
-            line-height: 1.5;
-        }
-
-        .factura-box {
-            border: 1px solid #ccc;
-            text-align: center;
-            padding: 14px;
-            font-weight: bold;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1.2fr .8fr;
-            gap: 20px;
-            margin-top: 25px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            border: 1px solid #ccc;
-            padding: 6px;
-            vertical-align: middle;
-        }
-
-        th {
-            background: #f2f2f2;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .right {
-            text-align: right;
-        }
-
-        .center {
-            text-align: center;
-        }
-
-        .totales {
-            width: 280px;
-            margin-left: auto;
-            margin-top: 8px;
-        }
-
-        .mensaje {
-            margin-top: 60px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .no-print {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-        }
-
-        .btn-print {
-            background: #1e5aa8;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        @media print {
-            .no-print {
-                display: none;
-            }
-
-            body {
-                margin: 0;
-            }
-
-            .page {
-                margin: 0;
-                padding: 14mm;
-            }
-        }
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #fff; color: #000; font-size: 12px; margin: 0; }
+        .page { width: 210mm; min-height: 297mm; margin: auto; padding: 16mm; }
+        .top { display: grid; grid-template-columns: 1fr 170px; gap: 20px; align-items: start; }
+        .empresa { text-align: center; font-weight: bold; }
+        .empresa-logo { max-height: 75px; max-width: 210px; object-fit: contain; margin-bottom: 8px; }
+        .empresa h2 { margin: 5px 0; font-size: 22px; }
+        .comprobante-box { border: 1px solid #bbb; text-align: center; padding: 14px; font-weight: bold; }
+        .info-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 20px; margin-top: 24px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 6px; vertical-align: middle; }
+        th { background: #f2f2f2; text-align: center; }
+        .right { text-align: right; }
+        .center { text-align: center; }
+        .totales { width: 280px; margin-left: auto; margin-top: 8px; }
+        .mensaje { margin-top: 50px; text-align: center; font-weight: bold; }
+        .no-print { position: fixed; top: 20px; right: 20px; }
+        .btn-print { background: #1e5aa8; color: #fff; border: 0; padding: 12px 24px; border-radius: 6px; cursor: pointer; }
+        @media print { .no-print { display: none; } .page { margin: 0; padding: 14mm; } }
     </style>
 </head>
-
 <body>
-
-<div class="no-print">
-    <button class="btn-print" onclick="window.print()">
-        Imprimir tamaño carta
-    </button>
-</div>
+<div class="no-print"><button class="btn-print" onclick="window.print()">Imprimir tamaño carta</button></div>
 
 <div class="page">
-
     <div class="top">
         <div class="empresa">
-
-            {% if empresa.logo %}
-                <img
-                    src="{{ empresa.logo.url }}"
-                    class="empresa-logo"
-                >
-            {% endif %}
-
+            {% if empresa.logo %}<img src="{{ empresa.logo.url }}" class="empresa-logo" alt="Logo">{% endif %}
             <h2>{{ empresa.nombre_empresa }}</h2>
-
-            {% if empresa.razon_social %}
-                <div>{{ empresa.razon_social }}</div>
-            {% endif %}
-
+            {% if empresa.razon_social %}<div>{{ empresa.razon_social }}</div>{% endif %}
             <div>RUC: {{ empresa.ruc|default:"-" }}</div>
             <div>{{ empresa.direccion|default:"-" }}</div>
             <div>Teléfono: {{ empresa.telefono|default:"-" }}</div>
             <div>Correo: {{ empresa.email|default:"-" }}</div>
-
-            {% if empresa.pagina_web %}
-                <div>{{ empresa.pagina_web }}</div>
-            {% endif %}
-
         </div>
-
-        <div class="factura-box">
-            RECIBO DE VENTA<br>
-            N° {{ venta.id|stringformat:"06d" }}
+        <div class="comprobante-box">
+            {{ venta.comprobante_nombre|upper }}<br>
+            {{ venta.comprobante_codigo }}
         </div>
     </div>
 
     <div class="info-grid">
         <table>
+            <tr><th colspan="4">Cliente</th></tr>
+            <tr><td><strong>Nombre</strong></td><td colspan="3">{{ venta.cliente.nombre|default:"Consumidor final" }}</td></tr>
             <tr>
-                <th colspan="4">Información del cliente</th>
+                <td><strong>Documento</strong></td><td>{{ venta.cliente.tipo_documento|default:"-" }} {{ venta.cliente.numero_documento|default:"" }}</td>
+                <td><strong>Teléfono</strong></td><td>{{ venta.cliente.telefono|default:"-" }}</td>
             </tr>
             <tr>
-                <td><strong>Nombre</strong></td>
-                <td colspan="3">{{ venta.cliente.nombre|default:"-" }}</td>
-            </tr>
-            <tr>
-                <td><strong>Documento</strong></td>
-                <td>{{ venta.cliente.numero_documento|default:"-" }}</td>
-                <td><strong>Teléfono</strong></td>
-                <td>{{ venta.cliente.telefono|default:"-" }}</td>
-            </tr>
-            <tr>
-                <td><strong>Dirección</strong></td>
-                <td>{{ venta.cliente.direccion|default:"-" }}</td>
-                <td><strong>Email</strong></td>
-                <td>{{ venta.cliente.email|default:"-" }}</td>
+                <td><strong>Dirección</strong></td><td>{{ venta.cliente.direccion|default:"-" }}</td>
+                <td><strong>Correo</strong></td><td>{{ venta.cliente.email|default:"-" }}</td>
             </tr>
         </table>
-
         <table>
-            <tr>
-                <th colspan="2">Fecha y hora recibo</th>
-            </tr>
-            <tr>
-                <td><strong>Generación</strong></td>
-                <td>{{ venta.created|date:"Y-m-d H:i" }}</td>
-            </tr>
-            <tr>
-                <td><strong>Expedición</strong></td>
-                <td>{{ venta.created|date:"Y-m-d H:i" }}</td>
-            </tr>
-            <tr>
-                <td><strong>Vencimiento</strong></td>
-                <td>-</td>
-            </tr>
+            <tr><th colspan="2">Operación</th></tr>
+            <tr><td><strong>Fecha</strong></td><td>{{ venta.created|date:"Y-m-d H:i" }}</td></tr>
+            <tr><td><strong>Método</strong></td><td>{{ venta.get_metodo_pago_display }}</td></tr>
+            <tr><td><strong>Sede</strong></td><td>{{ venta.sede.nombre|default:"-" }}</td></tr>
         </table>
     </div>
 
-    <table style="margin-top: 16px;">
-        <tr>
-            <td><strong>Caja</strong></td>
-            <td>{{ request.user.username|upper }}</td>
-        </tr>
-        <tr>
-            <td><strong>Sede</strong></td>
-            <td>{{ venta.sede.nombre|default:"-" }}</td>
-        </tr>
-    </table>
-
-    <table style="margin-top: 12px;">
+    <table style="margin-top: 14px;">
         <thead>
             <tr>
                 <th>Item</th>
-                <th>Cód. barra</th>
-                <th>Nombre producto</th>
+                <th>Código</th>
+                <th>Producto</th>
                 <th>Cantidad</th>
-                <th>Und. Medida</th>
-                <th>Vr. Unitario</th>
-                <th>% Desc</th>
+                <th>Precio</th>
                 <th>Total</th>
             </tr>
         </thead>
-
         <tbody>
             {% for detalle in venta.detalles.all %}
                 <tr>
@@ -248,77 +84,36 @@
                     <td class="center">{{ detalle.producto.codigo }}</td>
                     <td>{{ detalle.producto.nombre }}</td>
                     <td class="center">{{ detalle.cantidad|floatformat:0 }}</td>
-                    <td class="center">Und</td>
                     <td class="right">S/ {{ detalle.precio_unitario|floatformat:2 }}</td>
-                    <td class="center">0%</td>
                     <td class="right">S/ {{ detalle.subtotal|floatformat:2 }}</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <div style="margin-top: 10px;">
-        <strong>Total items:</strong> {{ venta.detalles.all|length }}
-        &nbsp;&nbsp;&nbsp;
-        <strong>Total productos:</strong> {{ venta.detalles.all|length }}
-    </div>
-
     <table class="totales">
-        <tr>
-            <td><strong>Subtotal</strong></td>
-            <td class="right">S/ {{ venta.subtotal|floatformat:2 }}</td>
-        </tr>
-        <tr>
-            <td><strong>Descuento</strong></td>
-            <td class="right">-S/ {{ venta.descuento|floatformat:2 }}</td>
-        </tr>
-        <tr>
-            <td><strong>IGV</strong></td>
-            <td class="right">S/ {{ venta.impuesto|floatformat:2 }}</td>
-        </tr>
-        <tr>
-            <td><strong>Delivery</strong></td>
-            <td class="right">S/ {{ venta.costo_envio|floatformat:2 }}</td>
-        </tr>
-        <tr>
-            <td><strong>Total</strong></td>
-            <td class="right">S/ {{ venta.total|floatformat:2 }}</td>
-        </tr>
-        <tr>
-            <td><strong>{{ venta.metodo_pago }}</strong></td>
-            <td class="right">S/ {{ venta.monto_recibido|floatformat:2 }}</td>
-        </tr>
-        <tr>
-            <td><strong>Cambio</strong></td>
-            <td class="right">S/ {{ venta.cambio|floatformat:2 }}</td>
-        </tr>
+        <tr><td><strong>Subtotal</strong></td><td class="right">S/ {{ venta.subtotal|floatformat:2 }}</td></tr>
+        <tr><td><strong>Descuento</strong></td><td class="right">-S/ {{ venta.descuento|floatformat:2 }}</td></tr>
+        <tr><td><strong>IGV</strong></td><td class="right">S/ {{ venta.impuesto|floatformat:2 }}</td></tr>
+        {% if venta.costo_envio > 0 %}<tr><td><strong>Delivery</strong></td><td class="right">S/ {{ venta.costo_envio|floatformat:2 }}</td></tr>{% endif %}
+        <tr><td><strong>Total</strong></td><td class="right">S/ {{ venta.total|floatformat:2 }}</td></tr>
+        <tr><td><strong>Recibido</strong></td><td class="right">S/ {{ venta.monto_recibido|floatformat:2 }}</td></tr>
+        <tr><td><strong>Cambio</strong></td><td class="right">S/ {{ venta.cambio|floatformat:2 }}</td></tr>
     </table>
 
     {% if venta.envio_domicilio %}
         <div style="margin-top: 15px;">
-            <strong>Envío a domicilio:</strong><br>
-            Origen: {{ venta.origen_envio|default:"-" }}<br>
-            Destino: {{ venta.destino_envio|default:"-" }}
+            <strong>Envío:</strong> {{ venta.origen_envio|default:"-" }} → {{ venta.destino_envio|default:"-" }}
         </div>
     {% endif %}
 
     <div class="mensaje">
-        {% if empresa.pie_ticket %}
-            {{ empresa.pie_ticket|linebreaksbr }}
-        {% else %}
-            GRACIAS POR TU COMPRA
-        {% endif %}
+        {% if empresa.pie_ticket %}{{ empresa.pie_ticket|linebreaksbr }}{% else %}GRACIAS POR SU COMPRA{% endif %}
     </div>
-
 </div>
 
 <script>
-    window.onload = function () {
-        setTimeout(() => {
-            window.print();
-        }, 500);
-    }
+window.addEventListener('load', () => setTimeout(() => window.print(), 500));
 </script>
-
 </body>
 </html>

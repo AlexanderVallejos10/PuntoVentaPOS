@@ -1,205 +1,40 @@
 {% extends 'base/base.html' %}
 
-{% block title %}
-    Enviar factura por correo
-{% endblock %}
+{% block title %}Enviar comprobante{% endblock %}
 
 {% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-xl-6">
+        <div class="page-card">
+            <div class="text-center mb-4">
+                <div class="rounded-circle bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center mb-3" style="width:64px;height:64px;">
+                    <i class="bi bi-envelope-paper fs-2"></i>
+                </div>
+                <h1 class="h3 fw-bold mb-1">Enviar comprobante</h1>
+                <p class="text-secondary mb-0">{{ venta.comprobante_nombre }} {{ venta.comprobante_codigo }}</p>
+            </div>
 
-<style>
-    .correo-wrapper {
-        min-height: 80vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
+            <div class="border rounded-4 p-3 mb-3">
+                <div class="small text-secondary">Cliente</div>
+                <div class="fw-semibold">{{ venta.cliente.nombre|default:"Consumidor final" }}</div>
+                <div class="small text-secondary mt-1">Total: S/ {{ venta.total|floatformat:2 }}</div>
+            </div>
 
-    .correo-card {
-        width: 620px;
-        background: white;
-        border-radius: 16px;
-        padding: 40px;
-        box-shadow: 0 8px 35px rgba(0,0,0,.08);
-    }
-
-    .correo-title {
-        text-align: center;
-        font-size: 42px;
-        font-weight: bold;
-        color: #173b73;
-        margin-bottom: 12px;
-    }
-
-    .correo-subtitle {
-        text-align: center;
-        color: #7c8898;
-        margin-bottom: 30px;
-        font-size: 17px;
-    }
-
-    .info-box {
-        background: #f7f9fc;
-        border: 1px solid #e7edf5;
-        border-radius: 10px;
-        padding: 18px;
-        margin-bottom: 22px;
-    }
-
-    .label {
-        font-weight: bold;
-        margin-bottom: 8px;
-        color: #1f2c3d;
-    }
-
-    .form-control {
-        height: 54px;
-        border-radius: 10px;
-        font-size: 17px;
-    }
-
-    .correo-help {
-        color: #7b8794;
-        font-size: 14px;
-        margin-top: 8px;
-    }
-
-    .acciones {
-        display: flex;
-        justify-content: center;
-        gap: 14px;
-        margin-top: 35px;
-    }
-
-    .btn-enviar {
-        background: #1e5aa8;
-        color: white;
-        border: none;
-        height: 56px;
-        padding: 0 34px;
-        border-radius: 10px;
-        font-size: 20px;
-        font-weight: bold;
-    }
-
-    .btn-enviar:hover {
-        background: #174887;
-    }
-
-    .btn-omitir {
-        background: #dce2ea;
-        color: #1d2b38;
-        border: none;
-        height: 56px;
-        padding: 0 34px;
-        border-radius: 10px;
-        font-size: 20px;
-        font-weight: bold;
-        text-decoration: none;
-    }
-
-    .btn-omitir:hover {
-        background: #cfd7e1;
-        color: #1d2b38;
-    }
-
-    .preview-box {
-        background: #eef5ff;
-        border-left: 5px solid #1e5aa8;
-        border-radius: 8px;
-        padding: 16px;
-        margin-top: 20px;
-    }
-
-    .preview-title {
-        font-weight: bold;
-        margin-bottom: 6px;
-    }
-
-    .badge-pendiente {
-        background: #fff3cd;
-        color: #856404;
-        padding: 7px 12px;
-        border-radius: 30px;
-        font-size: 13px;
-        display: inline-block;
-        margin-top: 14px;
-    }
-</style>
-
-<div class="correo-wrapper">
-
-    <div class="correo-card">
-
-        <div class="correo-title">
-            Enviar factura por correo
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Correo electrónico</label>
+                    <input type="email" class="form-control form-control-lg" name="correo_destino" value="{{ correo_cliente }}" placeholder="cliente@correo.com" required>
+                    <div class="form-text">Puedes cambiarlo antes de enviar el PDF.</div>
+                </div>
+                <div class="col-12 d-flex justify-content-center gap-2">
+                    <a href="{% url 'ventas:resumen_venta' venta.id %}" class="btn btn-outline-secondary btn-lg">Omitir</a>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-send me-1"></i>Enviar
+                    </button>
+                </div>
+            </form>
         </div>
-
-        <div class="correo-subtitle">
-            Confirma o actualiza el correo del cliente para enviar el PDF de la factura.
-        </div>
-
-        <form method="post">
-
-            {% csrf_token %}
-
-            <div class="info-box">
-
-                <div class="label">
-                    Cliente
-                </div>
-
-                <input
-                    type="text"
-                    class="form-control"
-                    value="{{ venta.cliente.nombre|default:'Cliente general' }}"
-                    readonly
-                >
-
-            </div>
-
-            <div class="mb-3">
-
-                <div class="label">
-                    Correo electrónico
-                </div>
-
-                <input
-                    type="email"
-                    class="form-control"
-                    name="correo_destino"
-                    value="{{ correo_cliente }}"
-                    placeholder="cliente@gmail.com"
-                    required
-                >
-
-                <div class="correo-help">
-                    Puedes cambiar el correo si el cliente quiere recibirlo en otro email.
-                </div>
-
-            </div>
-
-            <div class="acciones">
-
-                <button
-                    type="submit"
-                    class="btn-enviar"
-                >
-                    Enviar factura
-                </button>
-
-                <a
-                    href="{% url 'ventas:resumen_venta' venta.id %}"
-                    class="btn-omitir"
-                >
-                    Omitir
-                </a>
-
-            </div>
-
-        </form>
-
     </div>
-
 </div>
-
 {% endblock %}

@@ -3,8 +3,8 @@ import openpyxl
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
-from clientes.models.cliente import Cliente
-from ventas.models.venta import Venta
+from clientes.models import Cliente
+from ventas.models import Venta
 
 
 def exportar_detalle_cliente_excel(request, cliente_id):
@@ -18,34 +18,28 @@ def exportar_detalle_cliente_excel(request, cliente_id):
     hoja = workbook.active
     hoja.title = 'Historial cliente'
 
-    hoja.append([
-        'Cliente',
-        cliente.nombre
-    ])
-
+    hoja.append(['Cliente', cliente.nombre])
     hoja.append([])
-
     hoja.append([
-        'Factura',
+        'Comprobante',
         'Fecha y hora',
         'Método pago',
         'Total',
-        'Estado'
+        'Estado',
     ])
 
     for venta in ventas:
         hoja.append([
-            venta.id,
+            venta.comprobante_codigo,
             venta.created.strftime('%Y-%m-%d %H:%M:%S'),
             venta.metodo_pago or 'EFECTIVO',
             float(venta.total),
-            'Pagado'
+            venta.estado,
         ])
 
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-
     response['Content-Disposition'] = 'attachment; filename=historial_cliente.xlsx'
 
     workbook.save(response)

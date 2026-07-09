@@ -1,99 +1,593 @@
 {% extends 'base/base.html' %}
 
-{% block title %}
-Cerrar Caja
+{% block title %}Cerrar caja{% endblock %}
+{% block body_class %}cerrar-caja-view{% endblock %}
+
+{% block css %}
+<style>
+    /* CERRAR_CAJA_COMPACTO_OK */
+    .cerrar-caja-view .content-wrapper {
+        padding: 14px 26px 10px;
+    }
+
+    .caja-cierre {
+        --azul: #23539b;
+        --azul-oscuro: #143f78;
+        --azul-suave: #eef5ff;
+        --rojo: #dc3545;
+        --rojo-suave: #fff1f2;
+        --verde: #15803d;
+        --verde-suave: #ecfdf5;
+        --ambar: #b45309;
+        --ambar-suave: #fff7ed;
+        --borde: #d7e2ef;
+        --texto: #172033;
+        --gris: #64748b;
+        max-width: 1480px;
+        margin: 0 auto;
+    }
+
+    .caja-top {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .caja-top h1 {
+        margin: 0;
+        color: var(--texto);
+        font-size: clamp(32px, 3vw, 44px);
+        line-height: 1;
+        font-weight: 900;
+        letter-spacing: -.04em;
+    }
+
+    .caja-top p {
+        margin: 6px 0 0;
+        color: #52637a;
+        font-size: 14px;
+    }
+
+    .caja-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 10px;
+        margin-bottom: 9px;
+        border-radius: 999px;
+        background: #e9f2ff;
+        color: var(--azul);
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .caja-panel {
+        background: #fff;
+        border: 1px solid var(--borde);
+        border-radius: 16px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, .075);
+        padding: 16px;
+    }
+
+    .cierre-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 420px;
+        gap: 16px;
+        align-items: stretch;
+    }
+
+    .caja-titulo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        color: var(--texto);
+        font-size: 16px;
+        font-weight: 900;
+    }
+
+    .caja-titulo i {
+        color: var(--azul);
+        font-size: 18px;
+    }
+
+    .caja-seleccionada {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: center;
+        min-height: 88px;
+        padding: 14px 16px;
+        border-radius: 15px;
+        background: var(--azul);
+        color: #fff;
+        box-shadow: 0 12px 22px rgba(35, 83, 155, .20);
+    }
+
+    .icono-caja {
+        width: 54px;
+        height: 54px;
+        min-width: 54px;
+        border-radius: 15px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        color: var(--azul);
+    }
+
+    .icono-caja i {
+        font-size: 29px;
+        line-height: 1;
+    }
+
+    .caja-info strong {
+        display: block;
+        font-size: 21px;
+        line-height: 1.05;
+        font-weight: 900;
+        text-transform: capitalize;
+    }
+
+    .caja-info span {
+        display: block;
+        margin-top: 3px;
+        color: rgba(255, 255, 255, .82);
+        font-size: 13px;
+    }
+
+    .estado-caja {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 9px;
+        border: 1px solid rgba(255, 255, 255, .30);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .18);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        white-space: nowrap;
+    }
+
+    .resumen-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+    }
+
+    .dato-caja,
+    .mov-card {
+        min-height: 78px;
+        border: 1px solid #e4ebf5;
+        border-radius: 13px;
+        background: #fff;
+        padding: 11px 12px;
+    }
+
+    .dato-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--gris);
+        font-size: 12px;
+        font-weight: 800;
+        margin-bottom: 4px;
+        line-height: 1.15;
+    }
+
+    .dato-label i {
+        color: var(--azul);
+    }
+
+    .dato-valor {
+        display: block;
+        color: var(--texto);
+        font-size: 18px;
+        font-weight: 900;
+        line-height: 1.1;
+        word-break: break-word;
+    }
+
+    .movimientos-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .mov-card {
+        min-height: 70px;
+        background: #f8fbff;
+    }
+
+    .mov-card small {
+        display: block;
+        color: var(--gris);
+        font-size: 12px;
+        font-weight: 800;
+        margin-bottom: 3px;
+    }
+
+    .mov-card strong {
+        display: block;
+        color: var(--texto);
+        font-size: 19px;
+        font-weight: 900;
+        line-height: 1.05;
+    }
+
+    .caja-lateral {
+        height: 100%;
+        border: 1px solid #e4ebf5;
+        border-radius: 15px;
+        padding: 16px;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    }
+
+    .monto-esperado {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 84px;
+        border-radius: 15px;
+        background: var(--azul);
+        color: #fff;
+        padding: 14px 16px;
+        margin-bottom: 13px;
+    }
+
+    .monto-esperado small {
+        display: block;
+        margin-bottom: 4px;
+        color: rgba(255, 255, 255, .80);
+        font-weight: 800;
+        font-size: 13px;
+    }
+
+    .monto-esperado strong {
+        display: block;
+        font-size: 31px;
+        line-height: 1;
+        font-weight: 900;
+        letter-spacing: -.04em;
+        white-space: nowrap;
+    }
+
+    .monto-esperado i {
+        font-size: 35px;
+        color: rgba(255, 255, 255, .72);
+    }
+
+    .monto-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 7px;
+        color: var(--texto);
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .monto-label i {
+        color: var(--azul);
+    }
+
+    .monto-control {
+        height: 48px;
+        font-size: 18px;
+        font-weight: 900;
+    }
+
+    .resultado-cierre {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 64px;
+        border: 1px solid #bfdbfe;
+        border-radius: 13px;
+        background: #eff6ff;
+        padding: 12px 14px;
+        margin: 12px 0;
+        color: var(--azul-oscuro);
+    }
+
+    .resultado-cierre.resultado-ok {
+        border-color: #bbf7d0;
+        background: var(--verde-suave);
+        color: var(--verde);
+    }
+
+    .resultado-cierre.resultado-sobra {
+        border-color: #fed7aa;
+        background: var(--ambar-suave);
+        color: var(--ambar);
+    }
+
+    .resultado-cierre.resultado-falta {
+        border-color: #fecaca;
+        background: var(--rojo-suave);
+        color: #b91c1c;
+    }
+
+    .resultado-texto {
+        font-size: 15px;
+        font-weight: 900;
+        line-height: 1.15;
+    }
+
+    .resultado-texto small {
+        display: block;
+        margin-top: 3px;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .resultado-monto {
+        font-size: 21px;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+
+    .acciones-caja {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .btn-caja {
+        height: 48px;
+        border-radius: 10px;
+        font-weight: 900;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        white-space: nowrap;
+    }
+
+    .nota-cierre {
+        margin-top: 10px;
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.3;
+    }
+
+    @media (max-width: 1270px) {
+        .cierre-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .resumen-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .cerrar-caja-view .content-wrapper {
+            padding: 14px;
+        }
+
+        .caja-panel,
+        .caja-lateral {
+            padding: 14px;
+        }
+
+        .caja-top {
+            display: block;
+        }
+
+        .caja-seleccionada {
+            grid-template-columns: 52px minmax(0, 1fr);
+        }
+
+        .estado-caja {
+            grid-column: 1 / -1;
+            width: fit-content;
+        }
+
+        .resumen-grid,
+        .movimientos-grid,
+        .acciones-caja {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-
-<div class="page-card" style="max-width: 650px;">
-
-    <h2 class="fw-bold mb-4">
-        Cerrar Caja
-    </h2>
-
-    <p>
-        <strong>Caja:</strong>
-        {{ apertura.caja.nombre }}
-    </p>
-
-    <p>
-        <strong>Sede:</strong>
-        {{ apertura.caja.sede.nombre }}
-    </p>
-
-    <p>
-        <strong>Turno:</strong>
-        {{ apertura.get_turno_display }}
-    </p>
-
-    <p>
-        <strong>Monto inicial:</strong>
-        S/ {{ apertura.monto_inicial }}
-    </p>
-
-    <p>
-        <strong>Monto esperado:</strong>
-        S/ {{ monto_esperado }}
-    </p>
-
-    <form method="post">
-        {% csrf_token %}
-
-        <div class="mb-3">
-            <label class="form-label fw-bold">
-                Monto contado en caja
-            </label>
-
-            <input
-                type="number"
-                step="0.01"
-                name="monto_contado"
-                id="montoContado"
-                class="form-control"
-                required
-                oninput="calcularDiferencia()"
-            >
-        </div>
-
-        <div class="alert alert-info mt-3">
-            <strong>Resultado:</strong>
-            <span id="resultadoCaja">
-                Ingrese el monto contado.
+<div class="caja-cierre">
+    <div class="caja-top">
+        <div>
+            <span class="caja-chip">
+                <i class="bi bi-cash-stack"></i>
+                Caja de venta
             </span>
+            <h3><strong>Cerrar caja</strong></h3>
+            <p>Cuenta el efectivo físico, revisa el esperado y confirma el cierre.</p>
         </div>
+    </div>
 
-        <button class="btn btn-danger">
-            Cerrar Caja
-        </button>
+    <div class="caja-panel">
+        <form method="post" novalidate>
+            {% csrf_token %}
 
-    </form>
+            <div class="cierre-layout">
+                <section>
+                    <div class="caja-titulo">
+                        <i class="bi bi-grid-3x3-gap"></i>
+                        <span>Caja activa</span>
+                    </div>
 
+                    <div class="caja-seleccionada">
+                        <span class="icono-caja">
+                            <i class="bi bi-cash-stack"></i>
+                        </span>
+                        <span class="caja-info">
+                            <strong>{{ apertura.caja.nombre }}</strong>
+                            <span>{{ apertura.caja.sede.nombre }}</span>
+                        </span>
+                        <span class="estado-caja">
+                            <i class="bi bi-unlock-fill"></i>
+                            Abierta
+                        </span>
+                    </div>
+
+                    <div class="resumen-grid">
+                        <div class="dato-caja">
+                            <span class="dato-label"><i class="bi bi-person-badge"></i> Vendedor</span>
+                            <span class="dato-valor">{{ apertura.usuario.username|upper }}</span>
+                        </div>
+                        <div class="dato-caja">
+                            <span class="dato-label"><i class="bi bi-clock-history"></i> Turno</span>
+                            <span class="dato-valor">{{ apertura.get_turno_display }}</span>
+                        </div>
+                        <div class="dato-caja">
+                            <span class="dato-label"><i class="bi bi-cash-coin"></i> Inicial</span>
+                            <span class="dato-valor">S/ {{ apertura.monto_inicial|floatformat:2 }}</span>
+                        </div>
+                        <div class="dato-caja">
+                            <span class="dato-label"><i class="bi bi-calendar-check"></i> Apertura</span>
+                            <span class="dato-valor">{{ apertura.fecha_apertura|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="movimientos-grid">
+                        <div class="mov-card">
+                            <small>Ingresos</small>
+                            <strong>S/ {{ ingresos_total|floatformat:2 }}</strong>
+                        </div>
+                        <div class="mov-card">
+                            <small>Egresos</small>
+                            <strong>S/ {{ salidas_total|floatformat:2 }}</strong>
+                        </div>
+                        <div class="mov-card">
+                            <small>Movimientos</small>
+                            <strong>{{ movimientos_count }}</strong>
+                        </div>
+                    </div>
+                </section>
+
+                <aside class="caja-lateral">
+                    <div class="caja-titulo">
+                        <i class="bi bi-lock-fill"></i>
+                        <span>Cierre</span>
+                    </div>
+
+                    <div class="monto-esperado">
+                        <span>
+                            <small>Monto esperado</small>
+                            <strong>S/ {{ monto_esperado|floatformat:2 }}</strong>
+                        </span>
+                        <i class="bi bi-calculator"></i>
+                    </div>
+
+                    <label class="monto-label" for="montoContado">
+                        <i class="bi bi-wallet2"></i>
+                        Monto contado
+                    </label>
+
+                    <div class="input-group">
+                        <span class="input-group-text fw-bold">S/</span>
+                        <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            name="monto_contado"
+                            id="montoContado"
+                            class="form-control monto-control"
+                            placeholder="0.00"
+                            autocomplete="off"
+                            required
+                        >
+                    </div>
+
+                    <div id="resultadoCaja" class="resultado-cierre">
+                        <span class="resultado-texto">
+                            Pendiente
+                            <small>Ingrese el monto contado para calcular la diferencia.</small>
+                        </span>
+                        <span class="resultado-monto">S/ 0.00</span>
+                    </div>
+
+                    <div class="acciones-caja">
+                        <button class="btn btn-danger btn-caja" type="submit">
+                            <i class="bi bi-lock-fill"></i>
+                            Cerrar
+                        </button>
+                        <a href="{% url 'ventas:pos_venta' %}" class="btn btn-outline-secondary btn-caja">
+                            Cancelar
+                        </a>
+                    </div>
+
+                    <div class="nota-cierre">
+                        Confirma solo después de contar el efectivo físico.
+                    </div>
+                </aside>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
-const montoEsperado = Number("{{ monto_esperado|floatformat:2 }}".replace(",", "."));
-
-function calcularDiferencia() {
+(function () {
+    const montoEsperado = Number('{{ monto_esperado_js }}');
     const input = document.getElementById('montoContado');
     const resultado = document.getElementById('resultadoCaja');
 
-    const contado = Number(input.value || 0);
-    const diferencia = contado - montoEsperado;
-
-    if (!input.value) {
-        resultado.innerText = 'Ingrese el monto contado.';
-        return;
+    function moneda(valor) {
+        return 'S/ ' + Number(valor || 0).toLocaleString('es-PE', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
     }
 
-    if (diferencia === 0) {
-        resultado.innerText = 'Caja exacta. No hay diferencia.';
-    } else if (diferencia > 0) {
-        resultado.innerText = 'Sobra dinero: S/ ' + diferencia.toFixed(2);
-    } else {
-        resultado.innerText = 'Falta dinero: S/ ' + Math.abs(diferencia).toFixed(2);
+    function pintarResultado(tipo, titulo, detalle, monto) {
+        resultado.className = 'resultado-cierre ' + tipo;
+        resultado.innerHTML = `
+            <span class="resultado-texto">
+                ${titulo}
+                <small>${detalle}</small>
+            </span>
+            <span class="resultado-monto">${moneda(monto)}</span>
+        `;
     }
-}
+
+    function calcularDiferencia() {
+        if (!input.value) {
+            pintarResultado('', 'Pendiente', 'Ingrese el monto contado para calcular la diferencia.', 0);
+            return;
+        }
+
+        const contado = Number(input.value || 0);
+        const diferencia = contado - montoEsperado;
+        const diferenciaAbs = Math.abs(diferencia);
+
+        if (Math.abs(diferencia) < 0.005) {
+            pintarResultado('resultado-ok', 'Caja exacta', 'El contado coincide con el esperado.', diferenciaAbs);
+            return;
+        }
+
+        if (diferencia > 0) {
+            pintarResultado('resultado-sobra', 'Sobra efectivo', 'Revise ingresos no registrados.', diferenciaAbs);
+            return;
+        }
+
+        pintarResultado('resultado-falta', 'Falta efectivo', 'Revise ventas o egresos pendientes.', diferenciaAbs);
+    }
+
+    input.addEventListener('input', calcularDiferencia);
+    calcularDiferencia();
+})();
 </script>
-
 {% endblock %}

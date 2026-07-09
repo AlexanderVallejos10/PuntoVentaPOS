@@ -1,206 +1,428 @@
 {% extends 'base/base.html' %}
+{% load static usuarios_tags %}
 
-{% block title %}
-Dashboard POS
+{% block title %}Dashboard POS{% endblock %}
+
+{% block css %}
+<style id="inicio-rapido-v2-style">
+    /* INICIO_RAPIDO_V2_OK */
+    .dashboard-pdv {
+        padding: 8px 10px 24px;
+    }
+
+    .dashboard-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 14px;
+    }
+
+    .dashboard-head h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .dashboard-route {
+        color: #6b7280;
+        font-size: 13px;
+        margin-top: 3px;
+    }
+
+    .btn-venta-home {
+        min-width: 210px;
+        height: 52px;
+        border-radius: 6px;
+        font-size: 18px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .links-card,
+    .panel-dashboard {
+        background: #fff;
+        border: 1px solid #dbe3ef;
+        border-radius: 7px;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, .08);
+    }
+
+    .links-card {
+        padding: 16px 18px 18px;
+        border-top: 4px solid #12a085;
+        margin-bottom: 18px;
+    }
+
+    .links-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    .links-title h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: #374151;
+    }
+
+    .links-title span {
+        color: #8492a6;
+        font-size: 13px;
+    }
+
+    .quick-link-box {
+        height: 118px;
+        border-radius: 3px;
+        color: #fff;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 22px 24px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: inset 0 -3px rgba(0, 0, 0, .08), 0 6px 15px rgba(15, 23, 42, .12);
+        transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+    }
+
+    .quick-link-box:hover,
+    .quick-link-box:focus {
+        color: #fff;
+        transform: translateY(-2px);
+        filter: saturate(1.05);
+        box-shadow: inset 0 -3px rgba(0, 0, 0, .08), 0 10px 22px rgba(15, 23, 42, .18);
+    }
+
+    .quick-link-box .quick-number {
+        display: block;
+        font-size: 34px;
+        line-height: 1;
+        font-weight: 800;
+    }
+
+    .quick-link-box .quick-label {
+        display: block;
+        margin-top: 11px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .quick-link-box i {
+        font-size: 58px;
+        opacity: .9;
+        line-height: 1;
+    }
+
+    .q-red { background: #e74c3c; }
+    .q-orange { background: #d35400; }
+    .q-yellow { background: #f1c40f; }
+    .q-green { background: #00a65a; }
+    .q-blue { background: #2980b9; }
+    .q-purple { background: #8e44ad; }
+    .q-cyan { background: #00a7c8; }
+    .q-indigo { background: #2f5fb3; }
+    .q-slate { background: #7f8c8d; }
+    .q-navy { background: #2c3e50; }
+    .q-teal { background: #0f766e; }
+    .q-brown { background: #c56f3f; }
+
+    .metric-home {
+        min-height: 100px;
+        background: #fff;
+        border: 1px solid #e1e8f0;
+        border-radius: 7px;
+        padding: 18px 20px;
+        box-shadow: 0 9px 22px rgba(15, 23, 42, .07);
+    }
+
+    .metric-home span {
+        display: block;
+        color: #5b6472;
+        font-size: 14px;
+        margin-bottom: 9px;
+    }
+
+    .metric-home strong {
+        color: #050505;
+        font-size: 26px;
+        font-weight: 800;
+    }
+
+    .panel-dashboard {
+        padding: 18px 20px;
+    }
+
+    .panel-title-dashboard {
+        text-align: center;
+        font-size: 20px;
+        font-weight: 800;
+        color: #101827;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+    }
+
+    .tabla-dashboard thead th {
+        background: #f4f6f9;
+        color: #111827;
+        font-size: 15px;
+        font-weight: 800;
+        border-bottom: 1px solid #cdd6e1;
+    }
+
+    .tabla-dashboard td,
+    .tabla-dashboard th {
+        padding: 10px 8px;
+        vertical-align: middle;
+    }
+
+    .mini-summary {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .mini-summary div {
+        border: 1px solid #e3eaf3;
+        border-radius: 7px;
+        padding: 15px;
+        background: #fff;
+    }
+
+    .mini-summary span {
+        display: block;
+        color: #687385;
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    .mini-summary strong {
+        font-size: 22px;
+        font-weight: 800;
+    }
+
+    .chart-panel-home {
+        min-height: 340px;
+    }
+
+    .chart-panel-home canvas {
+        width: 100% !important;
+        height: 270px !important;
+    }
+
+    .modal-head-home {
+        background: #2459a5;
+        color: #fff;
+    }
+
+    @media (max-width: 991.98px) {
+        .dashboard-head {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .btn-venta-home {
+            width: 100%;
+        }
+
+        .quick-link-box {
+            height: 106px;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-
-<style>
-    .dashboard-wrapper {
-        padding: 20px 28px;
-    }
-
-    .top-alerts {
-        display: flex;
-        gap: 40px;
-        font-weight: bold;
-        color: #0052a5;
-        margin-bottom: 24px;
-    }
-
-    .alert-count {
-        background: #dc3545;
-        color: white;
-        border-radius: 50px;
-        padding: 2px 8px;
-        font-size: 12px;
-    }
-
-    .btn-ventas {
-        background: #235aa6;
-        color: white;
-        font-weight: bold;
-        padding: 14px 32px;
-        border-radius: 6px;
-        text-decoration: none;
-    }
-
-    .dash-card {
-        background: white;
-        border-radius: 8px;
-        padding: 24px;
-        box-shadow: 0 3px 14px rgba(0,0,0,.08);
-        min-height: 120px;
-    }
-
-    .dash-title {
-        color: #666;
-        font-size: 17px;
-        margin-bottom: 10px;
-    }
-
-    .dash-value {
-        font-size: 26px;
-        font-weight: bold;
-        color: #000;
-    }
-
-    .chart-card {
-        background: white;
-        border-radius: 8px;
-        padding: 22px;
-        box-shadow: 0 3px 14px rgba(0,0,0,.08);
-    }
-
-    .chart-title {
-        text-align: center;
-        font-weight: bold;
-        margin-bottom: 15px;
-    }
-</style>
-
-<div class="dashboard-wrapper">
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-
-        <div class="top-alerts">
-
-            <div
-                data-bs-toggle="modal"
-                data-bs-target="#modalBajoStock"
-                style="cursor:pointer;"
-            >
-                Productos con bajo stock
-                <span class="alert-count">
-                    {{ productos_bajo_stock }}
-                </span>
+<!-- INICIO_RAPIDO_V2_OK -->
+<div class="dashboard-pdv">
+    <div class="dashboard-head">
+        <div>
+            <h1>Dashboard</h1>
+            <div class="dashboard-route">
+                Principal <span class="mx-1">/</span> Dashboard
             </div>
-
-            <div
-                data-bs-toggle="modal"
-                data-bs-target="#modalCajasAbiertas"
-                style="cursor:pointer;"
-            >
-                Cajas abiertas
-                <span class="alert-count">
-                    {{ cajas_abiertas|length }}
-                </span>
-            </div>
-
-            <div>
-                Devoluciones del día
-                <span class="alert-count">
-                    S/ {{ devoluciones_dia|floatformat:2 }}
-                </span>
-            </div>
-
         </div>
 
-        <a href="{% url 'ventas:abrir_caja' %}" class="btn-ventas">
-            Realizar Ventas
+        <a href="{% url 'ventas:pos_venta' %}" class="btn btn-primary btn-venta-home">
+            <i class="bi bi-cart-check"></i>
+            Realizar ventas
         </a>
-
     </div>
 
-    <!-- Tarjetas del día -->
-    <div class="row g-4 mb-4">
+    <section class="links-card">
+        <div class="links-title">
+            <h2>Links rápidos</h2>
+            <span>Accesos de operación diaria</span>
+        </div>
 
-        <div class="col-md">
-            <div class="dash-card">
-                <div class="dash-title">Número de ventas</div>
-                <div class="dash-value"># {{ numero_facturas }}</div>
+        <div class="row g-3">
+            <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+                <a href="{% url 'ventas:pos_venta' %}" class="quick-link-box q-red">
+                    <div>
+                        <span class="quick-number">{{ cajas_total|default:'0' }}</span>
+                        <span class="quick-label">PDV</span>
+                    </div>
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+                <a href="{% url 'productos:producto_list' %}" class="quick-link-box q-orange">
+                    <div>
+                        <span class="quick-number">{{ productos_total|default:'0' }}</span>
+                        <span class="quick-label">Productos</span>
+                    </div>
+                    <i class="bi bi-upc-scan"></i>
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+                <a href="{% url 'ventas:historial_ventas' %}" class="quick-link-box q-yellow">
+                    <div>
+                        <span class="quick-number">{{ numero_facturas_general|default:'0' }}</span>
+                        <span class="quick-label">Ventas</span>
+                    </div>
+                    <i class="bi bi-cart4"></i>
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+                <a href="#modalCajasAbiertas" data-bs-toggle="modal" class="quick-link-box q-green">
+                    <div>
+                        <span class="quick-number">{{ cajas_abiertas_count|default:'0' }}</span>
+                        <span class="quick-label">Cajas abiertas</span>
+                    </div>
+                    <i class="bi bi-bell-fill"></i>
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+                <a href="{% url 'inventario:categoria_inventario_list' %}" class="quick-link-box q-blue">
+                    <div>
+                        <span class="quick-number">{{ categorias_total|default:'0' }}</span>
+                        <span class="quick-label">Categorías</span>
+                    </div>
+                    <i class="bi bi-folder-fill"></i>
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+                <a href="{% url 'clientes:cliente_list' %}" class="quick-link-box q-purple">
+                    <div>
+                        <span class="quick-number">{{ clientes_total|default:'0' }}</span>
+                        <span class="quick-label">Clientes</span>
+                    </div>
+                    <i class="bi bi-people-fill"></i>
+                </a>
+            </div>
+
+            {% if request.user.is_superuser or request.user|has_group:"Administrador" %}
+                <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+                    <a href="{% url 'compras:historial_compra_list' %}" class="quick-link-box q-cyan">
+                        <div>
+                            <span class="quick-number">{{ compras_total|default:'0' }}</span>
+                            <span class="quick-label">Compras</span>
+                        </div>
+                        <i class="bi bi-bag-check-fill"></i>
+                    </a>
+                </div>
+
+                <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+                    <a href="{% url 'usuarios:usuario_list' %}" class="quick-link-box q-indigo">
+                        <div>
+                            <span class="quick-number">{{ usuarios_total|default:'0' }}</span>
+                            <span class="quick-label">Usuarios</span>
+                        </div>
+                        <i class="bi bi-person-gear"></i>
+                    </a>
+                </div>
+
+                <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+                    <a href="{% url 'gastos:gasto_list' %}" class="quick-link-box q-slate">
+                        <div>
+                            <span class="quick-number">{{ gastos_total|default:'0' }}</span>
+                            <span class="quick-label">Gastos</span>
+                        </div>
+                        <i class="bi bi-cash-stack"></i>
+                    </a>
+                </div>
+
+                <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+                    <a href="{% url 'ventas:detalle_ventas' %}" class="quick-link-box q-navy">
+                        <div>
+                            <span class="quick-number">Ver</span>
+                            <span class="quick-label">Reportes</span>
+                        </div>
+                        <i class="bi bi-bar-chart-fill"></i>
+                    </a>
+                </div>
+
+                <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+                    <a href="{% url 'compras:proveedor_list' %}" class="quick-link-box q-teal">
+                        <div>
+                            <span class="quick-number">{{ proveedores_total|default:'0' }}</span>
+                            <span class="quick-label">Proveedores</span>
+                        </div>
+                        <i class="bi bi-truck"></i>
+                    </a>
+                </div>
+
+                <div class="col-12 col-sm-6 col-lg-4 col-xxl-3">
+                    <a href="{% url 'inventario:configuracion_empresa' %}" class="quick-link-box q-brown">
+                        <div>
+                            <span class="quick-number">Admin</span>
+                            <span class="quick-label">Configuración</span>
+                        </div>
+                        <i class="bi bi-gear-fill"></i>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-6 col-xl-3">
+            <div class="metric-home">
+                <span>Número de ventas</span>
+                <strong># {{ numero_facturas }}</strong>
             </div>
         </div>
 
-        <div class="col-md">
-            <div class="dash-card">
-                <div class="dash-title">Ventas del día</div>
-                <div class="dash-value">S/ {{ ventas_dia|floatformat:2 }}</div>
+        <div class="col-md-6 col-xl-3">
+            <div class="metric-home">
+                <span>Ventas del día</span>
+                <strong>S/ {{ ventas_dia|floatformat:2 }}</strong>
             </div>
         </div>
 
-        <div class="col-md">
-            <div class="dash-card">
-                <div class="dash-title">Devoluciones / anulaciones</div>
-                <div class="dash-value">S/ {{ devoluciones_dia|floatformat:2 }}</div>
+        <div class="col-md-6 col-xl-3">
+            <div class="metric-home">
+                <span>Devoluciones / anulaciones</span>
+                <strong class="text-danger">S/ {{ devoluciones_dia|floatformat:2 }}</strong>
             </div>
         </div>
 
-        <div class="col-md">
-            <div class="dash-card">
-                <div class="dash-title">Inicio de caja</div>
-                <div class="dash-value">S/ {{ inicio_caja|floatformat:2 }}</div>
+        <div class="col-md-6 col-xl-3">
+            <div class="metric-home">
+                <span>Estado de caja</span>
+                <strong class="text-success">S/ {{ estado_caja|floatformat:2 }}</strong>
             </div>
         </div>
-
-        <div class="col-md">
-            <div class="dash-card">
-                <div class="dash-title">Estado de caja</div>
-                <div class="dash-value">S/ {{ estado_caja|floatformat:2 }}</div>
-            </div>
-        </div>
-
     </div>
 
-    <!-- Tarjetas resumen general -->
-    <div class="row g-4 mb-4">
-
-        <div class="col-md-3">
-            <div class="dash-card">
-                <div class="dash-title">Ventas históricas</div>
-                <div class="dash-value"># {{ numero_facturas_general }}</div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="dash-card">
-                <div class="dash-title">Total vendido general</div>
-                <div class="dash-value text-success">
-                    S/ {{ ventas_general|floatformat:2 }}
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="dash-card">
-                <div class="dash-title">Devoluciones históricas</div>
-                <div class="dash-value text-danger">
-                    S/ {{ devoluciones_general|floatformat:2 }}
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="dash-card">
-                <div class="dash-title">Ganancia general</div>
-                <div class="dash-value text-primary">
-                    S/ {{ ganancia_general|floatformat:2 }}
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Resumen de cajas del día -->
-    <div class="row g-4 mb-4">
-
-        <div class="col-12">
-            <div class="chart-card">
-                <div class="chart-title">RESUMEN DE CAJAS DEL DÍA</div>
+    <div class="row g-3 mb-3">
+        <div class="col-lg-8">
+            <section class="panel-dashboard h-100">
+                <div class="panel-title-dashboard">Resumen de cajas del día</div>
                 <div class="table-responsive">
-                    <table class="table table-sm align-middle">
-                        <thead class="table-light">
+                    <table class="table table-sm table-hover align-middle mb-0 tabla-dashboard">
+                        <thead>
                             <tr>
                                 <th>Caja</th>
                                 <th>Sede</th>
@@ -221,22 +443,211 @@ Dashboard POS
                                     <td>{{ caja.vendedor }}</td>
                                     <td>{{ caja.turno }}</td>
                                     <td>S/ {{ caja.monto_inicial }}</td>
-                                    <td class="text-success fw-bold">S/ {{ caja.ingresos }}</td>
-                                    <td class="text-danger fw-bold">S/ {{ caja.egresos }}</td>
-                                    <td class="fw-bold">S/ {{ caja.esperado }}</td>
+                                    <td class="text-success fw-semibold">S/ {{ caja.ingresos }}</td>
+                                    <td class="text-danger fw-semibold">S/ {{ caja.egresos }}</td>
+                                    <td class="fw-semibold">S/ {{ caja.esperado }}</td>
                                     <td>
                                         {% if caja.estado == 'ABIERTA' %}
-                                            <span class="badge bg-success">ABIERTA</span>
+                                            <span class="badge text-bg-success">Abierta</span>
                                         {% else %}
-                                            <span class="badge bg-secondary">CERRADA</span>
+                                            <span class="badge text-bg-secondary">Cerrada</span>
                                         {% endif %}
                                     </td>
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="9" class="text-center text-muted">
-                                        No hay movimientos de caja hoy.
-                                    </td>
+                                    <td colspan="9" class="text-center text-muted py-4">No hay movimientos de caja hoy.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-lg-4">
+            <section class="panel-dashboard h-100">
+                <div class="panel-title-dashboard">Resumen general</div>
+                <div class="mini-summary">
+                    <div>
+                        <span>Ventas históricas</span>
+                        <strong># {{ numero_facturas_general }}</strong>
+                    </div>
+                    <div>
+                        <span>Total vendido</span>
+                        <strong class="text-success">S/ {{ ventas_general|floatformat:2 }}</strong>
+                    </div>
+                    <div>
+                        <span>Devoluciones</span>
+                        <strong class="text-danger">S/ {{ devoluciones_general|floatformat:2 }}</strong>
+                    </div>
+                    <div>
+                        <span>Ganancia general</span>
+                        <strong class="text-primary">S/ {{ ganancia_general|floatformat:2 }}</strong>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-xl-7">
+            <section class="panel-dashboard chart-panel-home">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 fw-bold mb-0">Ventas mensuales</h2>
+                    <span class="text-muted small">Año actual</span>
+                </div>
+                <canvas id="ventasMensuales"></canvas>
+            </section>
+        </div>
+
+        <div class="col-xl-5">
+            <section class="panel-dashboard chart-panel-home">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 fw-bold mb-0">Ventas por sede</h2>
+                    <span class="text-muted small">Participación</span>
+                </div>
+                <canvas id="ventasSede"></canvas>
+            </section>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-7">
+            <section class="panel-dashboard chart-panel-home">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 fw-bold mb-0">Ventas del mes</h2>
+                    <span class="text-muted small">Día a día</span>
+                </div>
+                <canvas id="ventasMes"></canvas>
+            </section>
+        </div>
+
+        <div class="col-xl-5">
+            <section class="panel-dashboard h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 fw-bold mb-0">Productos más vendidos</h2>
+                    <span class="text-muted small">Top 5</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0 tabla-dashboard">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-end">Cant.</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in productos_top %}
+                                <tr>
+                                    <td>{{ producto.producto__nombre }}</td>
+                                    <td class="text-end">{{ producto.total_cantidad|floatformat:0 }}</td>
+                                    <td class="text-end fw-semibold">S/ {{ producto.total_vendido }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-4">No hay productos vendidos.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+    new Chart(document.getElementById('ventasMensuales'), {
+        type: 'bar',
+        data: {
+            labels: meses,
+            datasets: [{
+                label: 'Ventas',
+                data: {{ ventas_mensuales|safe }},
+                backgroundColor: '#2f80ed',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    new Chart(document.getElementById('ventasSede'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ ventas_sede_labels|safe }},
+            datasets: [{
+                label: 'Ventas por sede',
+                data: {{ ventas_sede_data|safe }},
+                backgroundColor: ['#0f766e', '#2563eb', '#f59e0b', '#dc2626', '#7c3aed']
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            cutout: '62%',
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    new Chart(document.getElementById('ventasMes'), {
+        type: 'line',
+        data: {
+            labels: {{ dias_mes_labels|safe }},
+            datasets: [{
+                label: 'Ventas del mes',
+                data: {{ dias_mes_data|safe }},
+                fill: true,
+                tension: .35,
+                borderColor: '#0f766e',
+                backgroundColor: 'rgba(15, 118, 110, .12)',
+                pointRadius: 3
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+</script>
+
+<div class="modal fade" id="modalBajoStock" tabindex="-1" aria-labelledby="modalBajoStockLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-head-home">
+                <h5 class="modal-title" id="modalBajoStockLabel">Productos con bajo stock</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código</th>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th class="text-end">Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in productos_bajo_stock_lista %}
+                                <tr>
+                                    <td>{{ producto.codigo }}</td>
+                                    <td>{{ producto.nombre }}</td>
+                                    <td>{{ producto.categoria.nombre }}</td>
+                                    <td class="text-end"><span class="badge text-bg-danger">{{ producto.stock|floatformat:0 }}</span></td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">No hay productos con bajo stock.</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -244,43 +655,26 @@ Dashboard POS
                 </div>
             </div>
         </div>
-
     </div>
+</div>
 
-    <!-- Gráficos: ventas mensuales + ventas por sede -->
-    <div class="row g-4">
-
-        <div class="col-md-7">
-            <div class="chart-card">
-                <div class="chart-title">VENTAS MENSUALES</div>
-                <canvas id="ventasMensuales"></canvas>
+<div class="modal fade" id="modalCajasAbiertas" tabindex="-1" aria-labelledby="modalCajasAbiertasLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-head-home">
+                <h5 class="modal-title" id="modalCajasAbiertasLabel">Cajas abiertas</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-        </div>
-
-        <div class="col-md-5">
-            <div class="chart-card">
-                <div class="chart-title">VENTAS POR SEDE</div>
-                <canvas id="clientesNuevos"></canvas>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Cajas abiertas (fila propia) -->
-    <div class="row g-4 mt-4">
-
-        <div class="col-12">
-            <div class="chart-card">
-                <div class="chart-title">CAJAS ABIERTAS</div>
+            <div class="modal-body">
                 <div class="table-responsive">
-                    <table class="table table-sm align-middle">
+                    <table class="table table-sm table-bordered align-middle mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>Caja</th>
                                 <th>Sede</th>
-                                <th>Usuario</th>
+                                <th>Vendedor</th>
                                 <th>Turno</th>
-                                <th>Inicial</th>
+                                <th class="text-end">Monto inicial</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -290,13 +684,11 @@ Dashboard POS
                                     <td>{{ apertura.caja.sede.nombre }}</td>
                                     <td>{{ apertura.usuario.username }}</td>
                                     <td>{{ apertura.get_turno_display }}</td>
-                                    <td>S/ {{ apertura.monto_inicial }}</td>
+                                    <td class="text-end">S/ {{ apertura.monto_inicial }}</td>
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted">
-                                        No hay cajas abiertas.
-                                    </td>
+                                    <td colspan="5" class="text-center text-muted py-4">No hay cajas abiertas.</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -304,222 +696,6 @@ Dashboard POS
                 </div>
             </div>
         </div>
-
-    </div>
-
-    <!-- Ventas del mes día a día -->
-    <div class="row g-4 mt-4">
-
-        <div class="col-12">
-            <div class="chart-card">
-                <div class="chart-title">VENTAS DEL MES (DÍA A DÍA)</div>
-                <canvas id="ventasMes"></canvas>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Productos más vendidos -->
-    <div class="row g-4 mt-4">
-
-        <div class="col-12">
-            <div class="chart-card">
-                <div class="chart-title">PRODUCTOS MÁS VENDIDOS</div>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Producto</th>
-                                <th>Cantidad</th>
-                                <th>Total vendido</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for producto in productos_top %}
-                                <tr>
-                                    <td>{{ producto.producto__nombre }}</td>
-                                    <td>{{ producto.total_cantidad }}</td>
-                                    <td>S/ {{ producto.total_vendido }}</td>
-                                </tr>
-                            {% empty %}
-                                <tr>
-                                    <td colspan="3" class="text-center text-muted">
-                                        No hay productos vendidos.
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-const meses = [
-    'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
-    'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
-];
-
-new Chart(document.getElementById('ventasMensuales'), {
-    type: 'bar',
-    data: {
-        labels: meses,
-        datasets: [{
-            label: 'Ventas',
-            data: {{ ventas_mensuales|safe }}
-        }]
-    },
-    options: {
-        indexAxis: 'y',
-        responsive: true
-    }
-});
-
-new Chart(document.getElementById('clientesNuevos'), {
-    type: 'pie',
-    data: {
-        labels: {{ ventas_sede_labels|safe }},
-        datasets: [{
-            label: 'Ventas por sede',
-            data: {{ ventas_sede_data|safe }}
-        }]
-    },
-    options: {
-        responsive: true
-    }
-});
-
-new Chart(document.getElementById('ventasMes'), {
-    type: 'line',
-    data: {
-        labels: {{ dias_mes_labels|safe }},
-        datasets: [{
-            label: 'Ventas del mes',
-            data: {{ dias_mes_data|safe }},
-            fill: true,
-            tension: .4
-        }]
-    },
-    options: {
-        responsive: true
-    }
-});
-</script>
-
-<!-- Modal: Productos con bajo stock -->
-<div class="modal fade" id="modalBajoStock" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
-                    Productos con bajo stock
-                </h5>
-                <button
-                    type="button"
-                    class="btn-close btn-close-white"
-                    data-bs-dismiss="modal"
-                ></button>
-            </div>
-
-            <div class="modal-body">
-                <table class="table table-sm table-bordered align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Código</th>
-                            <th>Producto</th>
-                            <th>Categoría</th>
-                            <th>Stock</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for producto in productos_bajo_stock_lista %}
-                            <tr>
-                                <td>{{ producto.codigo }}</td>
-                                <td>{{ producto.nombre }}</td>
-                                <td>{{ producto.categoria.nombre }}</td>
-                                <td>
-                                    <span class="badge bg-danger">
-                                        {{ producto.stock }}
-                                    </span>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">
-                                    No hay productos con bajo stock.
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
     </div>
 </div>
-
-<!-- Modal: Cajas abiertas -->
-<div class="modal fade" id="modalCajasAbiertas" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content">
-
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
-                    Cajas abiertas
-                </h5>
-                <button
-                    type="button"
-                    class="btn-close btn-close-white"
-                    data-bs-dismiss="modal"
-                ></button>
-            </div>
-
-            <div class="modal-body">
-                <table class="table table-sm table-bordered align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Caja</th>
-                            <th>Sede</th>
-                            <th>Vendedor</th>
-                            <th>Turno</th>
-                            <th>Monto inicial</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for apertura in cajas_abiertas %}
-                            <tr>
-                                <td>{{ apertura.caja.nombre }}</td>
-                                <td>{{ apertura.caja.sede.nombre }}</td>
-                                <td>{{ apertura.usuario.username }}</td>
-                                <td>{{ apertura.get_turno_display }}</td>
-                                <td>S/ {{ apertura.monto_inicial }}</td>
-                                <td>
-                                    <span class="badge bg-success">
-                                        ABIERTA
-                                    </span>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="6" class="text-center text-muted">
-                                    No hay cajas abiertas.
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
-    </div>
-</div>
-
 {% endblock %}

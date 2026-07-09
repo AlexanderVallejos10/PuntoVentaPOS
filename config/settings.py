@@ -1,21 +1,24 @@
 from pathlib import Path
 from decouple import config
+from importlib.util import find_spec
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SECRET_KEY = config(
+    'SECRET_KEY',
+    default='django-insecure-local-development-key-change-in-production'
+)
 
-SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', cast=bool, default=True)
 
-DEBUG = config('DEBUG', cast=bool, default=False)
-
-ALLOWED_HOSTS = config(
-    'ALLOWED_HOSTS',
-    default='localhost,127.0.0.1'
-).split(',')
-
-
-# Application definition
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in config(
+        'ALLOWED_HOSTS',
+        default='localhost,127.0.0.1,[::1]'
+    ).split(',')
+    if host.strip()
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -32,13 +35,39 @@ INSTALLED_APPS = [
     'inventario',
     'compras',
     'gastos',
-    'django_recaptcha',
     'django.contrib.humanize',
 ]
 
-# settings.py
-RECAPTCHA_PUBLIC_KEY  = '6LfvAPcsAAAAALsIjdM_zGllMnyl7Ezj8OI5dWan'
-RECAPTCHA_PRIVATE_KEY = '6LfvAPcsAAAAABxM-GUog9-7VzkCYXn4dx5uR4Mg'
+DEFAULT_RECAPTCHA_PUBLIC_KEY = '6LfvAPcsAAAAALsIjdM_zGllMnyl7Ezj8OI5dWan'
+DEFAULT_RECAPTCHA_PRIVATE_KEY = '6LfvAPcsAAAAABxM-GUog9-7VzkCYXn4dx5uR4Mg'
+
+
+def valor_config(nombre, default=''):
+    valor = config(nombre, default=default)
+
+    if isinstance(valor, str):
+        valor = valor.strip()
+
+    return valor or default
+
+
+RECAPTCHA_PUBLIC_KEY = valor_config(
+    'RECAPTCHA_PUBLIC_KEY',
+    DEFAULT_RECAPTCHA_PUBLIC_KEY
+)
+RECAPTCHA_PRIVATE_KEY = valor_config(
+    'RECAPTCHA_PRIVATE_KEY',
+    DEFAULT_RECAPTCHA_PRIVATE_KEY
+)
+
+RECAPTCHA_ACTIVO = bool(
+    RECAPTCHA_PUBLIC_KEY
+    and RECAPTCHA_PRIVATE_KEY
+    and find_spec('django_recaptcha')
+)
+
+if RECAPTCHA_ACTIVO:
+    INSTALLED_APPS.append('django_recaptcha')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -71,67 +100,52 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+DB_ENGINE = config('DB_ENGINE', default='django.db.backends.sqlite3').strip()
+DB_NAME = config('DB_NAME', default='').strip()
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+if not DB_ENGINE:
+    DB_ENGINE = 'django.db.backends.sqlite3'
 
-DATABASES = {
-    'default': {
-        'ENGINE': config('DB_ENGINE'),
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
+if DB_ENGINE == 'django.db.backends.sqlite3':
+    DATABASES = {
+        'default': {
+            'ENGINE': DB_ENGINE,
+            'NAME': DB_NAME or str(BASE_DIR / 'db.sqlite3'),
+        }
     }
-}
-
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': DB_ENGINE,
+            'NAME': DB_NAME,
+            'USER': config('DB_USER', default=''),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default=''),
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
 LANGUAGE_CODE = 'es-pe'
-
 TIME_ZONE = 'America/Lima'
-
 USE_I18N = True
-
 USE_TZ = True
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-STATIC_URL = 'static/'
-
-STATICFILES_DIRS = [
-    BASE_DIR / 'static'
-]
-
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-
-MEDIA_URL = '/media/'
-
-MEDIA_ROOT = BASE_DIR / 'media'
-
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'home'
-
 LOGIN_REDIRECT_URL = '/ventas/'
 LOGOUT_REDIRECT_URL = '/login/'

@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - {{ empresa.nombre_empresa|default:"PuntoVentaPOS" }}</title>
 
     <link
@@ -39,10 +40,10 @@
 
         .login-card {
             width: 390px;
-            background: white;
+            background: #fff;
             border-radius: 10px;
             padding: 38px 44px 32px;
-            box-shadow: 0 12px 30px rgba(0,0,0,.35);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .35);
             text-align: center;
         }
 
@@ -74,10 +75,6 @@
             margin-bottom: 18px;
         }
 
-        .form-control::placeholder {
-            color: #777;
-        }
-
         .btn-login {
             width: 100%;
             height: 54px;
@@ -102,16 +99,10 @@
             margin-bottom: 10px;
         }
 
-        .forgot {
-            display: block;
-            margin-top: 25px;
-            color: #4b4b4b;
-            text-decoration: none;
-            font-size: 16px;
-        }
-
-        .forgot:hover {
-            text-decoration: underline;
+        .security-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 14px;
         }
 
         .alert {
@@ -120,13 +111,7 @@
             text-align: left;
         }
 
-        .security-text {
-            font-size: 12px;
-            color: #6c757d;
-            margin-top: 14px;
-        }
-
-        @media(max-width: 768px) {
+        @media (max-width: 768px) {
             .login-page {
                 justify-content: center;
                 padding: 20px;
@@ -139,11 +124,9 @@
         }
     </style>
 </head>
-
 <body>
 
 <div class="login-page">
-
     <div class="login-card">
 
         {% if empresa.logo %}
@@ -153,9 +136,7 @@
                 alt="{{ empresa.nombre_empresa }}"
             >
         {% else %}
-            <div class="default-icon">
-                🏪
-            </div>
+            <div class="default-icon">🏪</div>
         {% endif %}
 
         <div class="empresa-nombre">
@@ -164,19 +145,30 @@
 
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}">
                     {{ message }}
                 </div>
             {% endfor %}
         {% endif %}
 
-        <form method="post" autocomplete="off">
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
 
+        <form method="post" autocomplete="off">
             {% csrf_token %}
 
             {{ form.username }}
+            {% if form.username.errors %}
+                <div class="text-danger small mb-2">{{ form.username.errors }}</div>
+            {% endif %}
 
             {{ form.password }}
+            {% if form.password.errors %}
+                <div class="text-danger small mb-2">{{ form.password.errors }}</div>
+            {% endif %}
 
             <div class="captcha-box">
                 {{ form.captcha }}
@@ -191,16 +183,13 @@
             <button type="submit" class="btn-login">
                 Iniciar Sesión
             </button>
-
         </form>
-
 
         <div class="security-text">
             Después de 3 intentos fallidos, el acceso se bloquea por 30 minutos.
         </div>
 
     </div>
-
 </div>
 
 </body>

@@ -12,7 +12,7 @@ class DocumentoService:
         if not token:
             return {
                 'ok': False,
-                'mensaje': 'No se configuró el token de la API.'
+                'mensaje': 'No se configuró el servicio de consulta.'
             }
 
         url = f'https://dniruc.apisperu.com/api/v1/dni/{numero_documento}'
@@ -50,7 +50,7 @@ class DocumentoService:
         except requests.RequestException:
             return {
                 'ok': False,
-                'mensaje': 'Error al conectar con la API.'
+                'mensaje': 'No se pudo conectar con el servicio de consulta.'
             }
 
     @staticmethod
@@ -60,7 +60,7 @@ class DocumentoService:
         if not token:
             return {
                 'ok': False,
-                'mensaje': 'No se configuró el token de la API.'
+                'mensaje': 'No se configuró el servicio de consulta.'
             }
 
         url = f'https://dniruc.apisperu.com/api/v1/ruc/{numero_documento}'
@@ -92,5 +92,5 @@ class DocumentoService:
         except requests.RequestException:
             return {
                 'ok': False,
-                'mensaje': 'Error al conectar con la API.'
+                'mensaje': 'No se pudo conectar con el servicio de consulta.'
             }

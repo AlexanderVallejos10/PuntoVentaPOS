@@ -1,87 +1,548 @@
 {% extends 'base/base.html' %}
 
-{% block title %}
-Abrir Caja
+{% block title %}Abrir caja{% endblock %}
+{% block body_class %}abrir-caja-view{% endblock %}
+
+{% block css %}
+<style>
+    /* CAJA_ICONOS_REFINADO_HORIZONTAL_OK */
+    .abrir-caja-view .content-wrapper {
+        padding: 18px 28px 14px;
+    }
+
+    .caja-apertura {
+        --azul: #23539b;
+        --azul-oscuro: #143f78;
+        --azul-suave: #eef5ff;
+        --borde: #d7e2ef;
+        --texto: #172033;
+        --gris: #64748b;
+        --verde: #15803d;
+        max-width: 1420px;
+        margin: 0 auto;
+    }
+
+    .caja-top {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 16px;
+    }
+
+    .caja-top h1 {
+        margin: 0;
+        font-size: clamp(34px, 4vw, 54px);
+        line-height: 1;
+        font-weight: 800;
+        color: var(--texto);
+        letter-spacing: -.04em;
+    }
+
+    .caja-top p {
+        margin: 8px 0 0;
+        color: #52637a;
+        font-size: 15px;
+    }
+
+    .caja-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        margin-bottom: 10px;
+        border-radius: 999px;
+        color: var(--azul);
+        background: #e9f2ff;
+        font-weight: 800;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+    .caja-panel {
+        background: #fff;
+        border: 1px solid var(--borde);
+        border-radius: 16px;
+        box-shadow: 0 12px 34px rgba(15, 23, 42, .08);
+        padding: 22px;
+    }
+
+    .caja-columna,
+    .caja-lateral {
+        height: 100%;
+    }
+
+    .caja-lateral {
+        border: 1px solid #e4ebf5;
+        border-radius: 14px;
+        padding: 18px;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    }
+
+    .caja-titulo {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 13px;
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--texto);
+    }
+
+    .caja-titulo i {
+        color: var(--azul);
+        font-size: 20px;
+    }
+
+    .opciones-caja {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px;
+        max-height: 360px;
+        overflow-y: auto;
+        padding: 2px 4px 2px 0;
+    }
+
+    .opciones-caja::-webkit-scrollbar,
+    .opciones-turno::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .opciones-caja::-webkit-scrollbar-thumb,
+    .opciones-turno::-webkit-scrollbar-thumb {
+        background: #c8d5e6;
+        border-radius: 999px;
+    }
+
+    .opciones-turno {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .selector-radio {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .opcion-card {
+        border: 1px solid var(--borde);
+        border-radius: 14px;
+        background: #fff;
+        color: var(--texto);
+        cursor: pointer;
+        user-select: none;
+        transition: border-color .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+    }
+
+    .opcion-card:hover {
+        border-color: #9fc3fb;
+        box-shadow: 0 10px 22px rgba(35, 83, 155, .12);
+        transform: translateY(-1px);
+    }
+
+    .selector-radio:focus + .opcion-card {
+        outline: 4px solid rgba(35, 83, 155, .16);
+        outline-offset: 2px;
+    }
+
+    .selector-radio:checked + .opcion-card {
+        background: var(--azul);
+        border-color: var(--azul);
+        color: #fff;
+        box-shadow: 0 14px 26px rgba(35, 83, 155, .24);
+    }
+
+    .selector-radio:disabled + .opcion-card {
+        cursor: not-allowed;
+        opacity: .52;
+        background: #f1f5f9;
+        box-shadow: none;
+        transform: none;
+    }
+
+    .caja-card {
+        min-height: 102px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px;
+    }
+
+    .icono-caja,
+    .icono-turno {
+        width: 58px;
+        height: 58px;
+        min-width: 58px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--azul-suave);
+        color: var(--azul);
+        transition: background .16s ease, color .16s ease, transform .16s ease;
+    }
+
+    .icono-caja i,
+    .icono-turno i {
+        font-size: 31px;
+        line-height: 1;
+    }
+
+    .selector-radio:checked + .opcion-card .icono-caja,
+    .selector-radio:checked + .opcion-card .icono-turno {
+        background: #fff;
+        color: var(--azul);
+        transform: scale(1.02);
+    }
+
+    .selector-radio:disabled + .opcion-card .icono-caja {
+        background: #e2e8f0;
+        color: #94a3b8;
+    }
+
+    .caja-info {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .caja-info strong {
+        font-size: 19px;
+        line-height: 1.1;
+        font-weight: 800;
+        text-transform: capitalize;
+    }
+
+    .caja-info small {
+        color: var(--gris);
+        font-size: 14px;
+        line-height: 1.15;
+    }
+
+    .selector-radio:checked + .opcion-card .caja-info small,
+    .selector-radio:checked + .opcion-card .turno-texto small {
+        color: rgba(255, 255, 255, .82);
+    }
+
+    .estado-caja {
+        width: fit-content;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 8px;
+        border: 1px solid #bbf7d0;
+        border-radius: 999px;
+        background: #ecfdf5;
+        color: var(--verde);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+
+    .estado-caja.ocupada {
+        border-color: #fecaca;
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    .selector-radio:checked + .opcion-card .estado-caja {
+        border-color: rgba(255, 255, 255, .28);
+        background: rgba(255, 255, 255, .18);
+        color: #fff;
+    }
+
+    .turno-card {
+        min-height: 104px;
+        padding: 14px 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        text-align: center;
+    }
+
+    .icono-turno {
+        width: 52px;
+        height: 52px;
+        min-width: 52px;
+        border-radius: 15px;
+    }
+
+    .icono-turno i {
+        font-size: 29px;
+    }
+
+    .turno-texto strong {
+        display: block;
+        font-size: 16px;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+
+    .turno-texto small {
+        display: block;
+        margin-top: 2px;
+        color: var(--gris);
+        font-size: 12px;
+    }
+
+    .monto-linea {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) auto;
+        gap: 14px;
+        align-items: end;
+        margin-top: 18px;
+    }
+
+    .monto-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-weight: 800;
+        color: var(--texto);
+        font-size: 17px;
+    }
+
+    .monto-label i {
+        color: var(--azul);
+    }
+
+    .monto-control {
+        height: 50px;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .acciones-caja {
+        display: flex;
+        gap: 10px;
+        align-items: end;
+        flex-wrap: nowrap;
+    }
+
+    .btn-caja {
+        height: 50px;
+        min-width: 132px;
+        border-radius: 10px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        white-space: nowrap;
+    }
+
+    .caja-nota {
+        margin-top: 12px;
+        color: #64748b;
+        font-size: 13px;
+        line-height: 1.35;
+    }
+
+    .caja-vacia {
+        border-radius: 12px;
+        padding: 18px;
+    }
+
+    @media (max-width: 1199.98px) {
+        .opciones-caja {
+            max-height: none;
+        }
+
+        .caja-lateral {
+            margin-top: 2px;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .abrir-caja-view .content-wrapper {
+            padding: 14px;
+        }
+
+        .caja-panel {
+            padding: 16px;
+        }
+
+        .caja-top {
+            display: block;
+        }
+
+        .opciones-caja,
+        .opciones-turno,
+        .monto-linea {
+            grid-template-columns: 1fr;
+        }
+
+        .acciones-caja {
+            width: 100%;
+        }
+
+        .btn-caja {
+            flex: 1;
+            min-width: 0;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
+<div class="caja-apertura">
+    <div class="caja-top">
+        <div>
+            <span class="caja-chip">
+                <i class="bi bi-cash-stack"></i>
+                Caja de venta
+            </span>
+            <h3><strong>Abrir caja</strong></h3>
+            <p>Elige la caja, selecciona el turno e ingresa el efectivo inicial.</p>
+        </div>
+    </div>
 
-<div class="page-card" style="max-width: 600px;">
+    <div class="caja-panel">
+        <form method="post" novalidate>
+            {% csrf_token %}
 
-    <h2 class="fw-bold mb-4">
-        Abrir Caja
-    </h2>
+            <div class="row g-4 align-items-stretch">
+                <div class="col-xl-7">
+                    <section class="caja-columna">
+                        <div class="caja-titulo">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                            <span>Seleccione una caja</span>
+                        </div>
 
-    <form method="post">
-        {% csrf_token %}
-
-        <div class="mb-3">
-            <label class="form-label fw-bold">
-                Caja
-            </label>
-
-            <select
-                name="caja"
-                class="form-select"
-                required
-            >
-                <option value="">
-                    Seleccione una caja
-                </option>
-
-                {% for caja in cajas %}
-                    <option
-                        value="{{ caja.id }}"
-                        {% if caja.id in cajas_ocupadas %}
-                            disabled
+                        {% if cajas %}
+                            <div class="opciones-caja">
+                                {% for caja in cajas %}
+                                    <div class="position-relative">
+                                        <input
+                                            type="radio"
+                                            class="selector-radio"
+                                            name="caja"
+                                            id="caja_{{ caja.id }}"
+                                            value="{{ caja.id }}"
+                                            required
+                                            {% if caja.id in cajas_ocupadas %}disabled{% endif %}
+                                            {% if caja.id == caja_inicial_id %}checked{% endif %}
+                                        >
+                                        <label for="caja_{{ caja.id }}" class="opcion-card caja-card">
+                                            <span class="icono-caja">
+                                                <i class="bi bi-cash-stack"></i>
+                                            </span>
+                                            <span class="caja-info">
+                                                <strong>{{ caja.nombre }}</strong>
+                                                <small>{{ caja.sede.nombre }}</small>
+                                                {% if caja.id in cajas_ocupadas %}
+                                                    <span class="estado-caja ocupada">
+                                                        <i class="bi bi-lock-fill"></i> Ocupada
+                                                    </span>
+                                                {% else %}
+                                                    <span class="estado-caja">
+                                                        <i class="bi bi-check-circle-fill"></i> Disponible
+                                                    </span>
+                                                {% endif %}
+                                            </span>
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning caja-vacia mb-0">
+                                No hay cajas activas para esta sede.
+                            </div>
                         {% endif %}
-                    >
-                        {{ caja.nombre }} - {{ caja.sede.nombre }}
-                        {% if caja.id in cajas_ocupadas %}
-                            (OCUPADA)
-                        {% endif %}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
+                    </section>
+                </div>
 
-        <div class="mb-3">
-            <label class="form-label fw-bold">
-                Turno
-            </label>
+                <div class="col-xl-5">
+                    <aside class="caja-lateral">
+                        <section>
+                            <div class="caja-titulo">
+                                <i class="bi bi-clock-history"></i>
+                                <span>Turno</span>
+                            </div>
 
-            <select
-                name="turno"
-                class="form-select"
-                required
-            >
-                <option value="MANANA">Mañana</option>
-                <option value="TARDE">Tarde</option>
-                <option value="NOCHE">Noche</option>
-            </select>
-        </div>
+                            <div class="opciones-turno">
+                                <div class="position-relative">
+                                    <input type="radio" class="selector-radio" name="turno" id="turno_manana" value="MANANA" checked required>
+                                    <label for="turno_manana" class="opcion-card turno-card">
+                                        <span class="icono-turno"><i class="bi bi-sunrise"></i></span>
+                                        <span class="turno-texto">
+                                            <strong>Mañana</strong>
+                                            <small>Inicio</small>
+                                        </span>
+                                    </label>
+                                </div>
 
-        <div class="mb-3">
-            <label class="form-label fw-bold">
-                Monto inicial
-            </label>
+                                <div class="position-relative">
+                                    <input type="radio" class="selector-radio" name="turno" id="turno_tarde" value="TARDE" required>
+                                    <label for="turno_tarde" class="opcion-card turno-card">
+                                        <span class="icono-turno"><i class="bi bi-sun"></i></span>
+                                        <span class="turno-texto">
+                                            <strong>Tarde</strong>
+                                            <small>Intermedio</small>
+                                        </span>
+                                    </label>
+                                </div>
 
-            <input
-                type="number"
-                step="0.01"
-                name="monto_inicial"
-                class="form-control"
-                value="0.00"
-                required
-            >
-        </div>
+                                <div class="position-relative">
+                                    <input type="radio" class="selector-radio" name="turno" id="turno_noche" value="NOCHE" required>
+                                    <label for="turno_noche" class="opcion-card turno-card">
+                                        <span class="icono-turno"><i class="bi bi-moon-stars"></i></span>
+                                        <span class="turno-texto">
+                                            <strong>Noche</strong>
+                                            <small>Cierre</small>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </section>
 
-        <button class="btn btn-primary">
-            Abrir Caja
-        </button>
+                        <section class="monto-linea">
+                            <div>
+                                <label class="monto-label" for="monto_inicial">
+                                    <i class="bi bi-cash-coin"></i>
+                                    Monto inicial
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text fw-bold">S/</span>
+                                    <input
+                                        id="monto_inicial"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        name="monto_inicial"
+                                        class="form-control monto-control"
+                                        value="0.00"
+                                        required
+                                    >
+                                </div>
+                            </div>
 
-    </form>
+                            <div class="acciones-caja">
+                                <button class="btn btn-primary btn-caja" {% if not caja_inicial_id %}disabled{% endif %}>
+                                    <i class="bi bi-unlock-fill"></i>
+                                    Abrir
+                                </button>
+                                <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-caja">
+                                    Cancelar
+                                </a>
+                            </div>
+                        </section>
 
+                        <div class="caja-nota">
+                            Si una caja aparece ocupada, primero debe cerrarse desde el usuario que la abrió.
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
-
 {% endblock %}

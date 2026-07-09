@@ -1,127 +1,83 @@
 {% extends 'base/base.html' %}
 
-{% block title %}
-    Venta terminada
-{% endblock %}
+{% block title %}Venta registrada{% endblock %}
 
 {% block content %}
+<div class="row g-4 align-items-stretch">
+    <div class="col-lg-7">
+        <div class="page-card h-100">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="rounded-circle bg-success-subtle text-success-emphasis d-flex align-items-center justify-content-center" style="width:56px;height:56px;">
+                    <i class="bi bi-check2-circle fs-2"></i>
+                </div>
+                <div>
+                    <h1 class="h3 mb-0">Venta registrada</h1>
+                    <p class="text-secondary mb-0">{{ venta.comprobante_nombre }} {{ venta.comprobante_codigo }}</p>
+                </div>
+            </div>
 
-<style>
-    .resumen-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 32px;
-        padding: 25px;
-    }
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="border rounded-4 p-3 h-100">
+                        <div class="text-secondary small">Total</div>
+                        <div class="h3 mb-0">S/ {{ venta.total|floatformat:2 }}</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded-4 p-3 h-100">
+                        <div class="text-secondary small">Recibido</div>
+                        <div class="h3 mb-0">S/ {{ venta.monto_recibido|floatformat:2 }}</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded-4 p-3 h-100">
+                        <div class="text-secondary small">Cambio</div>
+                        <div class="h3 mb-0 text-success">S/ {{ venta.cambio|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
 
-    .resumen-title {
-        background: #cfe5ff;
-        color: #084b91;
-        text-align: center;
-        font-size: 36px;
-        padding: 18px;
-        border-radius: 4px;
-        margin-bottom: 20px;
-    }
-
-    .resumen-linea {
-        border-top: 1px solid #ddd;
-        padding: 12px;
-        text-align: center;
-        font-size: 18px;
-        font-weight: bold;
-    }
-
-    .resumen-label {
-        color: #0097a7;
-        font-weight: bold;
-    }
-
-    .resumen-boton {
-        display: block;
-        width: 100%;
-        padding: 22px;
-        border-radius: 5px;
-        text-align: center;
-        color: white;
-        font-size: 20px;
-        font-weight: bold;
-        text-decoration: none;
-        margin-bottom: 16px;
-    }
-
-    .verde {
-        background: #24a846;
-    }
-
-    .azul {
-        background: #2d57a5;
-    }
-
-    .gris {
-        background: #6c757d;
-    }
-</style>
-
-<div class="resumen-grid">
-
-    <div>
-        <div class="resumen-title">
-            Proceso de facturación terminado
-        </div>
-
-        <div class="resumen-linea">
-            <div class="resumen-label">Total a Pagar</div>
-            S/ {{ venta.total|floatformat:2 }}
-        </div>
-
-        <div class="resumen-linea">
-            <div class="resumen-label">Dinero Recibido</div>
-            S/ {{ venta.monto_recibido|floatformat:2 }}
-        </div>
-
-        <div class="resumen-linea">
-            <div class="resumen-label">Cambio</div>
-            S/ {{ venta.cambio|floatformat:2 }}
+            <div class="table-responsive mt-4">
+                <table class="table table-sm align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center">Cantidad</th>
+                            <th class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for detalle in venta.detalles.all %}
+                            <tr>
+                                <td>{{ detalle.producto.nombre }}</td>
+                                <td class="text-center">{{ detalle.cantidad }}</td>
+                                <td class="text-end">S/ {{ detalle.subtotal|floatformat:2 }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div>
-        <a
-            href="{% url 'ventas:imprimir_ticket' venta.id %}"
-            target="_blank"
-            class="resumen-boton verde"
-        >
-            Imprimir Ticket<br>
-            No. {{ venta.id|stringformat:"06d" }}
-        </a>
-
-        <a
-            href="{% url 'ventas:imprimir_carta' venta.id %}"
-            target="_blank"
-            class="resumen-boton verde"
-        >
-            Imprimir Tamaño Carta<br>
-            No. {{ venta.id|stringformat:"06d" }}
-        </a>
-
-        <a
-            href="{% url 'ventas:enviar_factura_correo' venta.id %}"
-            class="resumen-boton azul"
-        >
-            Enviar Factura<br>
-            por Correo
-        </a>
-
-        <a
-            href="{% url 'ventas:pos_venta' %}"
-            class="resumen-boton gris"
-        >
-            Realizar<br>
-            Más Ventas
-        </a>
+    <div class="col-lg-5">
+        <div class="page-card h-100">
+            <h2 class="h5 mb-3">Siguiente acción</h2>
+            <div class="d-grid gap-2">
+                <a href="{% url 'ventas:imprimir_ticket' venta.id %}" target="_blank" class="btn btn-success btn-lg">
+                    <i class="bi bi-printer me-1"></i>Imprimir ticket
+                </a>
+                <a href="{% url 'ventas:imprimir_carta' venta.id %}" target="_blank" class="btn btn-outline-success btn-lg">
+                    <i class="bi bi-file-earmark-text me-1"></i>Imprimir carta
+                </a>
+                <a href="{% url 'ventas:enviar_factura_correo' venta.id %}" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-envelope me-1"></i>Enviar por correo
+                </a>
+                <a href="{% url 'ventas:pos_venta' %}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-cart-plus me-1"></i>Nueva venta
+                </a>
+            </div>
+        </div>
     </div>
-
 </div>
-
 {% endblock %}

@@ -1,816 +1,795 @@
 {% extends 'base/base.html' %}
+{% load static %}
 
-{% block title %}
-    Punto de Venta
-{% endblock %}
+{% block title %}Punto de Venta{% endblock %}
+{% block body_class %}pos-page{% endblock %}
 
-{% block content %}
-
- <style>
-    body {
-        background: #f4f6f9;
+{% block css %}
+<link href="{% static 'css/pos.css' %}?v=20260708-05" rel="stylesheet">
+<style>
+    body.pos-page {
+        overflow: hidden;
+        background: #f3f6fb;
     }
 
-    .pos-container {
+    body.pos-page .content-wrapper {
+        height: calc(100vh - var(--topbar-alto, 58px));
+        padding: 12px 18px;
+        overflow: hidden;
+    }
+
+    .pos-screen {
+        height: 100%;
+        min-height: 0;
         display: grid;
-        grid-template-columns: 53% 47%;
+        grid-template-columns: minmax(680px, 1.05fr) minmax(520px, .95fr);
+        gap: 18px;
+        align-items: stretch;
+    }
+
+    .pos-left,
+    .pos-cart {
+        min-width: 0;
+        min-height: 0;
+    }
+
+    .pos-left {
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr);
         gap: 12px;
     }
 
-    .content-wrapper {
-        padding: 18px;
-    }
-
-    .scanner-box {
-        display: flex;
-        align-items: center;
+    .pos-toolbar {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr) 76px;
         gap: 10px;
-        margin-bottom: 10px;
+        align-items: stretch;
     }
 
-    .scanner-icon {
-        font-size: 34px;
-        color: #114e9f;
+    .pos-scanner-icon,
+    .pos-caja-btn,
+    .pos-search-input {
+        height: 48px;
+        border-radius: 9px;
     }
 
-    .scanner-input {
-        height: 38px;
-        border-radius: 8px;
-        font-size: 14px;
-        border: 1px solid #d8dce3;
-        padding-left: 16px;
+    .pos-scanner-icon {
+        background: #fff;
+        border: 1px solid #d8e0ea;
+        color: #111827;
+        font-size: 1.5rem;
+        box-shadow: 0 3px 9px rgba(15, 23, 42, .06);
     }
 
-    .scanner-input:focus {
-        box-shadow: none;
-        border-color: #114e9f;
+    .pos-search-form {
+        min-width: 0;
     }
 
-    .categorias-scroll {
+    .pos-search-input {
+        border: 1px solid #b9d2f5;
+        box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .15);
+        font-size: 1rem;
+        padding-left: 14px;
+        background: #fff;
+    }
+
+    .pos-search-input:focus {
+        border-color: #85b7ff;
+        box-shadow: 0 0 0 .28rem rgba(13, 110, 253, .20);
+    }
+
+    .pos-caja-btn {
+        background: #fff;
+        border: 1px solid #d6e1ef;
+        color: #0d3f82;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        box-shadow: 0 3px 9px rgba(15, 23, 42, .06);
+    }
+
+    .pos-caja-btn:hover,
+    .pos-caja-btn:focus {
+        background: #f8fbff;
+        color: #0d3f82;
+        border-color: #8fb8ee;
+    }
+
+    .categoria-strip {
         display: flex;
         gap: 12px;
         overflow-x: auto;
-        padding-bottom: 8px;
-        margin-bottom: 18px;
+        overflow-y: hidden;
+        padding: 0 2px 8px;
+        scrollbar-width: thin;
     }
 
     .categoria-card {
-        min-width: 130px;
-        height: 72px;
-        background: white;
-        border: 1px solid #d9dfe7;
+        flex: 0 0 142px;
+        height: 84px;
+        background: #fff;
+        color: #111827;
+        text-decoration: none;
+        border: 1px solid #d8e0ea;
         border-radius: 8px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
-        transition: .2s;
-        font-weight: bold;
-        font-size: 12px;
+        gap: 5px;
         text-align: center;
+        font-size: .72rem;
+        font-weight: 800;
+        line-height: 1.15;
+        transition: box-shadow .15s ease, border-color .15s ease, background-color .15s ease;
     }
 
-    .categoria-card:hover {
-        box-shadow: 0 8px 15px rgba(0,0,0,.10);
+    .categoria-card:hover,
+    .categoria-card:focus {
+        color: #111827;
+        border-color: #1f5ca8;
+        box-shadow: 0 7px 17px rgba(15, 23, 42, .10);
     }
 
     .categoria-card.active {
-        border: 2px solid #114e9f;
-        background: #edf4ff;
+        background: #eaf2ff;
+        border-color: #1f5ca8;
     }
 
-    .categoria-img {
-        width: 42px;
-        height: 42px;
+    .categoria-img,
+    .categoria-icon {
+        width: 46px;
+        height: 46px;
         border-radius: 50%;
         object-fit: cover;
-        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f0f4fa;
+        color: #1f5ca8;
+        font-size: 1.55rem;
+    }
+
+    .categoria-card.active .categoria-icon {
+        color: #c7d0dd;
+    }
+
+    .productos-scroll {
+        min-height: 0;
+        overflow: auto;
+        padding: 2px 6px 12px 0;
     }
 
     .productos-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(120px, 1fr));
-        gap: 10px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 15px;
+        align-items: start;
+    }
+
+    .producto-form {
+        margin: 0;
+        min-width: 0;
     }
 
     .producto-card {
-        background: white;
-        border-radius: 8px;
+        width: 100%;
+        height: 226px;
+        background: #fff;
+        border: 1px solid #dde5ee;
+        border-top: 3px solid #1f5ca8;
+        border-radius: 10px;
+        padding: 0;
         overflow: hidden;
-        border-top: 4px solid #1d5eb3;
-        border-left: 1px solid #dce2ea;
-        border-right: 1px solid #dce2ea;
-        border-bottom: 1px solid #dce2ea;
-        transition: .2s;
         cursor: pointer;
-        min-height: 205px;
+        display: grid;
+        grid-template-rows: 42px 120px 1fr;
+        text-align: left;
+        box-shadow: 0 5px 14px rgba(15, 23, 42, .07);
+        transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
     }
 
-    .producto-card:hover {
+    .producto-card:hover,
+    .producto-card:focus {
         transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(0,0,0,.12);
+        border-color: #1f5ca8;
+        box-shadow: 0 9px 20px rgba(15, 23, 42, .12);
     }
 
     .producto-precio {
-        background: #dff0ff;
-        display: inline-block;
-        margin: 6px;
-        padding: 5px 10px;
-        border-radius: 8px;
-        font-weight: bold;
-        font-size: 14px;
+        align-self: start;
+        justify-self: start;
+        margin: 7px 8px 0;
+        padding: 6px 12px;
+        border-radius: 7px;
+        background: #d6efff;
+        color: #0f172a;
+        font-size: .92rem;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
     }
 
     .producto-imagen {
-        height: 105px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: white;
-        padding: 8px;
+        padding: 6px 14px 10px;
+        background: #fff;
+        overflow: hidden;
     }
 
     .producto-imagen img {
         max-width: 100%;
-        max-height: 95px;
+        max-height: 108px;
         object-fit: contain;
         display: block;
     }
 
     .producto-icon-default {
-        font-size: 72px;
-        color: #555;
+        width: 92px;
+        height: 84px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f4f6f9;
+        color: #64748b;
+        font-size: 3rem;
     }
 
     .producto-nombre {
-        background: #ececec;
-        padding: 8px;
+        min-height: 58px;
+        padding: 9px 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e7e7e7;
+        color: #050505;
         text-align: center;
-        min-height: 48px;
-        font-weight: bold;
-        font-size: 11px;
+        font-size: .72rem;
+        font-weight: 800;
+        line-height: 1.25;
+        text-transform: uppercase;
+        word-break: break-word;
     }
 
-    .panel-venta {
-        max-height: calc(100vh - 125px);
-        background: white;
-        border-radius: 8px;
-        overflow: auto;
-        box-shadow: 0 5px 18px rgba(0,0,0,.08);
+    .pos-cart {
+        background: #fff;
+        border: 1px solid #e0e6ee;
+        border-radius: 10px;
+        overflow: hidden;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto auto;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, .08);
     }
 
-    .panel-header {
+    .cart-header {
+        min-height: 62px;
         background: #0d57a4;
-        color: white;
-        padding: 12px;
+        color: #fff;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 0 14px;
+        letter-spacing: .01em;
+    }
+
+    .cart-header i {
+        font-size: 1.55rem;
+        opacity: .95;
+    }
+
+    .cart-header strong {
         text-align: center;
-        font-size: 18px;
-        font-weight: bold;
+        font-size: 1.05rem;
     }
 
-    .tabla-productos {
-        font-size: 12px;
+    .cart-table-wrap {
+        min-height: 0;
+        overflow: auto;
     }
 
-    .tabla-productos th {
-        background: #eef2f7;
-        font-size: 12px;
-        padding: 7px;
-        text-align: center;
+    .cart-table {
+        font-size: .82rem;
     }
 
-    .tabla-productos td {
-        padding: 6px;
+    .cart-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #d8dee8;
+        color: #111827;
+        border-bottom: 1px solid #c8d0dc;
+        padding: 8px 9px;
+        white-space: nowrap;
+    }
+
+    .cart-table tbody td {
+        padding: 7px 9px;
+        border-color: #dde5ef;
         vertical-align: middle;
-        text-align: center;
     }
 
-    .cantidad-box {
-        width: 38px;
-        height: 30px;
-        border: 1px solid #d6dce5;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: white;
-        font-weight: bold;
+    .cart-product-name {
+        max-width: 260px;
+        font-weight: 700;
+        line-height: 1.16;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
-    .cantidad-btn {
-        width: 28px;
-        height: 28px;
-        border-radius: 6px;
-        display: flex;
+    .cantidad-control {
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 4px;
+    }
+
+    .cantidad-control .btn {
+        width: 26px;
+        height: 26px;
         padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        line-height: 1;
     }
 
-    .totales-box {
-        margin-top: 14px;
-        border: 1px solid #e5e5e5;
+    .cantidad-control span {
+        min-width: 34px;
+        height: 28px;
+        padding: 0 8px;
+        border: 1px solid #d3dce8;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        font-weight: 700;
     }
 
-    .totales-row {
+    .cart-summary {
+        margin: 13px 14px 10px;
+        border: 1px solid #dde5ee;
+        background: #fff;
+    }
+
+    .summary-row {
+        min-height: 38px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 7px 12px;
-        border-bottom: 1px solid #e5e5e5;
-        font-size: 13px;
+        gap: 12px;
+        padding: 6px 12px;
+        border-bottom: 1px solid #dde5ee;
+        font-size: .94rem;
     }
 
-    .total-final {
-        color: #0ca443;
-        font-size: 18px;
-        font-weight: bold;
+    .summary-row:last-child {
+        border-bottom: 0;
+    }
+
+    .summary-row strong {
+        color: #050505;
+        text-align: right;
+        margin-left: auto;
+    }
+
+    .summary-row span {
+        min-width: 125px;
+        text-align: right;
+        color: #56657a;
+        font-weight: 700;
+    }
+
+    .summary-total strong {
+        font-size: 1rem;
+    }
+
+    .summary-total span {
+        color: #0ca443 !important;
+        font-size: 1.12rem;
+        font-weight: 900 !important;
+    }
+
+    .cart-actions {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 8px;
+        padding: 0 14px 14px;
+    }
+
+    .cart-actions .btn {
+        min-height: 46px;
+        border-radius: 8px;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .btn-pagar {
         background: #2e58a7;
-        color: white;
-        border: none;
-        height: 35px;
-        font-size: 15px;
-        border-radius: 8px;
-        width: 100%;
+        border-color: #2e58a7;
+        color: #fff;
+        font-weight: 700;
+        min-width: 220px;
     }
 
-    .btn-pagar:hover {
+    .btn-pagar:hover,
+    .btn-pagar:focus {
         background: #214b97;
-        color: white;
+        border-color: #214b97;
+        color: #fff;
     }
 
-    .acciones-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-        margin-top: 8px;
+    .caja-mini-card {
+        border: 1px solid #e3e8ef;
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 12px;
     }
 
-    .btn-accion {
-        height: 35px;
-        font-size: 15px;
-        border-radius: 8px;
+    .caja-money .fw-bold {
+        color: #0ca443;
     }
 
     .ventas-espera-tabs {
         position: fixed;
         bottom: 0;
-        left: 92px;
+        left: var(--sidebar-ancho, 92px);
         display: flex;
         gap: 6px;
         z-index: 3000;
     }
 
-    .tab-venta-espera {
-        background: #2453a6;
-        color: white;
-        padding: 10px 14px;
-        border-radius: 6px 6px 0 0;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+    @media (max-height: 820px) {
+        body.pos-page .content-wrapper { padding: 10px 16px; }
+        .pos-screen { gap: 14px; }
+        .categoria-card { height: 74px; flex-basis: 130px; font-size: .67rem; }
+        .categoria-img, .categoria-icon { width: 40px; height: 40px; font-size: 1.35rem; }
+        .producto-card { height: 202px; grid-template-rows: 38px 104px 1fr; }
+        .producto-imagen img { max-height: 92px; }
+        .producto-nombre { min-height: 52px; font-size: .68rem; }
+        .cart-header { min-height: 54px; }
+        .summary-row { min-height: 33px; padding-top: 5px; padding-bottom: 5px; font-size: .86rem; }
+        .cart-summary { margin-top: 9px; margin-bottom: 8px; }
+        .cart-actions .btn { min-height: 40px; font-size: .95rem; }
     }
 
-    .cerrar-tab {
-        background: #dc3545;
-        color: white;
-        padding: 7px 10px;
-        text-decoration: none;
-        border-radius: 0 5px 0 0;
-        font-weight: bold;
+    @media (max-width: 1500px) {
+        .pos-screen { grid-template-columns: minmax(650px, 1.05fr) minmax(480px, .95fr); gap: 14px; }
+        .productos-grid { gap: 12px; }
+        .producto-card { height: 205px; }
+        .cart-product-name { max-width: 190px; }
     }
 
-    .cerrar-tab:hover {
-        color: white;
-        background: #bb2d3b;
+    @media (max-width: 1199.98px) {
+        body.pos-page { overflow: auto; }
+        body.pos-page .content-wrapper { height: auto; min-height: calc(100vh - var(--topbar-alto, 58px)); overflow: visible; }
+        .pos-screen { height: auto; grid-template-columns: 1fr; }
+        .pos-cart { min-height: 560px; }
     }
 
-    @media(max-width: 1200px) {
-       .pos-container {
-            grid-template-columns: 1fr;
-        }
+    @media (max-width: 767.98px) {
+        .pos-toolbar { grid-template-columns: 48px 1fr; }
+        .pos-caja-btn { grid-column: 1 / -1; }
+        .productos-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .cart-actions { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
 
-        .productos-grid {
-            grid-template-columns: repeat(2, minmax(140px, 1fr));
-        }
-     }
- </style>
+{% block content %}
+<div id="posConfig"
+     data-total="{{ total|floatformat:2 }}"
+     data-csrf="{{ csrf_token }}"
+     data-cliente-url="{% url 'clientes:cliente_create_ajax' %}"
+     data-documento-url="{% url 'clientes:buscar_documento' %}"></div>
 
-{% if sede_actual %}
-    <div class="alert alert-primary py-2 d-flex justify-content-between align-items-center mb-3">
+<div class="pos-screen">
+    <section class="pos-left">
+        <div class="pos-toolbar">
+            <button class="btn pos-scanner-icon" type="button" onclick="document.getElementById('codigoScanner')?.focus();" title="Escáner">
+                <i class="bi bi-upc-scan"></i>
+            </button>
 
-        <div>
-            <strong>Vendiendo en sede:</strong>
-            {{ sede_actual.nombre|upper }}
-
-            {% if apertura_caja %}
-                <span class="mx-2">|</span>
-
-                <strong>Caja:</strong>
-                {{ apertura_caja.caja.nombre }}
-
-                <span class="mx-2">|</span>
-
-                <strong>Turno:</strong>
-                {{ apertura_caja.get_turno_display }}
-
-                <span class="mx-2">|</span>
-
-                <strong>Monto inicial:</strong>
-                S/ {{ apertura_caja.monto_inicial }}
-
-                <span class="mx-2">|</span>
-
-                <strong>Monto actual:</strong>
-                <span class="text-success fw-bold">
-                    S/ {{ monto_actual_caja }}
-                </span>
-
-                <button
-                    type="button"
-                    class="btn btn-outline-primary btn-sm ms-3"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modalDetalleCaja"
-                >
-                    Detalle caja
-                </button>
-            {% endif %}
-        </div>
-
-        <div class="d-flex gap-2">
-
-
-            {% if apertura_caja %}
-                <a
-                    href="{% url 'ventas:cerrar_caja' %}"
-                    class="btn btn-danger btn-sm px-3"
-                >
-                    Cerrar caja
-                </a>
-            {% else %}
-                <a
-                    href="{% url 'ventas:abrir_caja' %}"
-                    class="btn btn-success btn-sm px-3"
-                >
-                    Abrir caja
-                </a>
-            {% endif %}
-
-        </div>
-
-    </div>
-{% endif %}
-
-<div class="pos-container">
-
-     <section>
-
-   
-     <div class="scanner-box">
-            <i class="bi bi-upc-scan scanner-icon"></i>
-
-            <form
-                method="post"
-                action="{% url 'ventas:agregar_producto_scanner' %}"
-                class="w-100"
-                autocomplete="off"
-            >
+            <form method="post" action="{% url 'ventas:agregar_producto_scanner' %}" class="pos-search-form" autocomplete="off">
                 {% csrf_token %}
-
-                <input
-                    type="text"
-                    name="codigo"
-                    id="codigoScanner"
-                    class="form-control scanner-input"
-                    placeholder="Encuentra tu producto aquí..."
-                    autofocus
-                >
+                <input type="text" name="codigo" id="codigoScanner" class="form-control pos-search-input" placeholder="Encuentra tu producto aquí..." autofocus>
             </form>
+
+            <button class="btn pos-caja-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#panelCaja" aria-controls="panelCaja" title="Caja del turno">
+                <i class="bi bi-cash-register"></i>
+                <span>Caja</span>
+            </button>
         </div>
 
-        <div class="categorias-scroll">
-
-            <a
-                href="{% url 'ventas:pos_venta' %}"
-                class="text-decoration-none text-dark"
-            >
-                <div class="categoria-card {% if not request.GET.categoria %}active{% endif %}">
-                    TODOS
-                </div>
+        <div class="categoria-strip">
+            <a href="{% url 'ventas:pos_venta' %}" class="categoria-card {% if not request.GET.categoria %}active{% endif %}">
+                <span class="categoria-icon"><i class="bi bi-cart4"></i></span>
+                <span>TODOS</span>
             </a>
 
             {% for categoria in categorias %}
-                <a
-                    href="?categoria={{ categoria.id }}"
-                    class="text-decoration-none text-dark"
-                >
-                    <div class="categoria-card {% if request.GET.categoria == categoria.id|stringformat:'s' %}active{% endif %}">
-
-                        {% if categoria.imagen %}
-                            <img
-                                src="{{ categoria.imagen.url }}"
-                                class="categoria-img"
-                                alt="{{ categoria.nombre }}"
-                            >
-                        {% else %}
-                            <i class="bi bi-tags fs-2 mb-1"></i>
-                        {% endif %}
-
-                        {{ categoria.nombre|upper }}
-
-                    </div>
+                <a href="?categoria={{ categoria.id }}" class="categoria-card {% if request.GET.categoria == categoria.id|stringformat:'s' %}active{% endif %}">
+                    {% if categoria.imagen %}
+                        <img src="{{ categoria.imagen.url }}" class="categoria-img" alt="{{ categoria.nombre }}">
+                    {% else %}
+                        <span class="categoria-icon"><i class="bi bi-tags"></i></span>
+                    {% endif %}
+                    <span>{{ categoria.nombre|upper }}</span>
                 </a>
             {% endfor %}
-
         </div>
 
-        <div class="productos-grid">
+        <div class="productos-scroll">
+            <div class="productos-grid">
+                {% for producto in productos %}
+                    <form method="post" action="{% url 'ventas:agregar_producto_scanner' %}" class="producto-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                        <input type="hidden" name="codigo" value="{{ producto.codigo }}">
 
-            {% for producto in productos %}
-                <form
-                    method="post"
-                    action="{% url 'ventas:agregar_producto_scanner' %}"
-                >
-                    {% csrf_token %}
+                        <button type="submit" class="producto-card">
+                            <span class="producto-precio">S/ {{ producto.precio_venta|floatformat:2 }}</span>
 
-                    <input
-                        type="hidden"
-                        name="codigo"
-                        value="{{ producto.codigo }}"
-                    >
+                            <span class="producto-imagen">
+                                {% if producto.imagen %}
+                                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <span class="producto-icon-default" style="display:none;"><i class="bi bi-box-seam"></i></span>
+                                {% elif producto.imagen_url %}
+                                    <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <span class="producto-icon-default" style="display:none;"><i class="bi bi-box-seam"></i></span>
+                                {% else %}
+                                    <span class="producto-icon-default"><i class="bi bi-box-seam"></i></span>
+                                {% endif %}
+                            </span>
 
-                    <button
-                        type="submit"
-                        class="producto-card w-100 border-0 text-start"
-                    >
-                        <div class="producto-precio">
-                            S/ {{ producto.precio_venta|floatformat:2 }}
-                        </div>
-
-                        <div class="producto-imagen">
-
-                            {% if producto.imagen %}
-                                <img
-                                    src="{{ producto.imagen.url }}"
-                                    alt="{{ producto.nombre }}"
-                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                                >
-                                <i class="bi bi-box-seam producto-icon-default" style="display:none;"></i>
-
-                            {% elif producto.imagen_url %}
-                                <img
-                                    src="{{ producto.imagen_url }}"
-                                    alt="{{ producto.nombre }}"
-                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                                >
-                                <i class="bi bi-box-seam producto-icon-default" style="display:none;"></i>
-
-                            {% else %}
-                                <i class="bi bi-box-seam producto-icon-default"></i>
-                            {% endif %}
-
-                        </div>
-
-                        <div class="producto-nombre">
-                            {{ producto.nombre|upper }}
-                        </div>
-                    </button>
-                </form>
-            {% empty %}
-                <div class="alert alert-warning">
-                    No hay productos.
-                </div>
-            {% endfor %}
-
+                            <span class="producto-nombre">{{ producto.nombre|upper }}</span>
+                        </button>
+                    </form>
+                {% empty %}
+                    <div class="alert alert-warning mb-0">No hay productos disponibles para esta sede.</div>
+                {% endfor %}
+            </div>
         </div>
-
     </section>
 
-    <section class="panel-venta">
-
-        <div class="panel-header">
-            ATENDIENDO
+    <aside class="pos-cart">
+        <div class="cart-header">
+            <i class="bi bi-receipt-cutoff"></i>
+            <strong>ATENDIENDO</strong>
+            <span class="badge text-bg-light">POS</span>
         </div>
 
-        <div class="p-3">
-
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} py-2">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-
-            <table class="table align-middle tabla-productos">
-
+        <div class="cart-table-wrap">
+            <table class="table table-sm align-middle cart-table mb-0">
                 <thead>
                     <tr>
-                        <th>Stock</th>
+                        <th class="text-end">Stock</th>
                         <th>Producto</th>
-                        <th>Cant</th>
-                        <th>Valor</th>
-                        <th>SubTotal</th>
+                        <th class="text-center">Cant</th>
+                        <th class="text-end">Valor</th>
+                        <th class="text-end">SubTotal</th>
                         <th></th>
                     </tr>
                 </thead>
-
                 <tbody>
                     {% for item in productos_carrito %}
                         <tr>
+                            <td class="text-end text-secondary">{{ item.producto.stock_pos|default:item.producto.stock|floatformat:0 }}</td>
                             <td>
-                                {{ item.producto.stock_pos|default:item.producto.stock|floatformat:0 }}
+                                <div class="cart-product-name">{{ item.producto.nombre }}</div>
+                                {% if item.producto.codigo %}<small class="text-secondary">{{ item.producto.codigo }}</small>{% endif %}
                             </td>
-
-                            <td class="text-start">
-                                <strong>
-                                    {{ item.producto.nombre }}
-                                </strong>
-                                <br>
-                                <small class="text-muted">
-                                    {{ item.producto.codigo }}
-                                </small>
-                            </td>
-
-                            <td>
-                                <div class="d-flex align-items-center justify-content-center gap-2">
-                                    <a
-                                        href="{% url 'ventas:disminuir_cantidad' item.producto.id %}"
-                                        class="btn btn-sm btn-outline-secondary cantidad-btn"
-                                    >
-                                        -
-                                    </a>
-
-                                    <div class="cantidad-box">
-                                        {{ item.cantidad }}
-                                    </div>
-
-                                    <a
-                                        href="{% url 'ventas:aumentar_cantidad' item.producto.id %}"
-                                        class="btn btn-sm btn-outline-primary cantidad-btn"
-                                    >
-                                        +
-                                    </a>
+                            <td class="text-center">
+                                <div class="cantidad-control">
+                                    <a href="{% url 'ventas:disminuir_cantidad' item.producto.id %}" class="btn btn-sm btn-outline-secondary">−</a>
+                                    <span>{{ item.cantidad }}</span>
+                                    <a href="{% url 'ventas:aumentar_cantidad' item.producto.id %}" class="btn btn-sm btn-outline-primary">+</a>
                                 </div>
                             </td>
-
-                            <td>
-                                S/ {{ item.producto.precio_venta|floatformat:2 }}
-                            </td>
-
-                            <td>
-                                <strong>
-                                    S/ {{ item.subtotal|floatformat:2 }}
-                                </strong>
-                            </td>
-
-                            <td>
-                                <a
-                                    href="{% url 'ventas:quitar_producto_carrito' item.producto.id %}"
-                                    class="btn btn-danger btn-sm"
-                                >
-                                    <i class="bi bi-trash"></i>
+                            <td class="text-end">{{ item.producto.precio_venta|floatformat:2 }}</td>
+                            <td class="text-end fw-semibold">{{ item.subtotal|floatformat:2 }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'ventas:quitar_producto_carrito' item.producto.id %}" class="btn btn-sm btn-link text-danger px-1" title="Quitar">
+                                    <i class="bi bi-trash3 fs-5"></i>
                                 </a>
                             </td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">
-                                Sin productos agregados
-                            </td>
+                            <td colspan="6" class="text-center text-secondary py-5">Agrega productos para cobrar.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
-
             </table>
-
-            <div class="totales-box">
-
-                <div class="totales-row">
-                    <strong>Total Bruto:</strong>
-                    <span>
-                        S/ {{ total|floatformat:2 }}
-                    </span>
-                </div>
-
-                <div class="totales-row">
-                    <strong>Descuento:</strong>
-                    <span id="descuentoPanel">
-                        -S/ 0.00
-                    </span>
-                </div>
-
-                <div class="totales-row">
-                    <strong>Impuestos:</strong>
-                    <span id="impuestoPanel">
-                        S/ 0.00
-                    </span>
-                </div>
-
-                <div class="totales-row">
-                    <strong>Envío:</strong>
-                    <span id="envioPanel">
-                        S/ 0.00
-                    </span>
-                </div>
-
-                <div class="totales-row">
-                    <strong>Total Compra:</strong>
-                    <span class="total-final" id="totalPanel">
-                        S/ {{ total|floatformat:2 }}
-                    </span>
-                </div>
-
-            </div>
-
-            <div class="mt-3">
-                <button
-                    class="btn-pagar"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modalPago"
-                    {% if not productos_carrito %}disabled{% endif %}
-                >
-                    Pagar
-                </button>
-            </div>
-
-            <div class="acciones-grid">
-
-                <a
-                    href="{% url 'ventas:guardar_venta_espera' %}"
-                    class="btn btn-outline-primary btn-accion"
-                >
-                    Espera
-                </a>
-
-                <a
-                    href="{% url 'ventas:limpiar_carrito' %}"
-                    class="btn btn-danger btn-accion"
-                >
-                    Cancelar
-                </a>
-
-            </div>
-
         </div>
 
-    </section>
-
-</div>
-
-<div class="ventas-espera-tabs">
-    {% for venta in ventas_espera %}
-        <div class="tab-venta-espera">
-            <a
-                href="{% url 'ventas:cargar_venta_espera' venta.id %}"
-                class="text-white text-decoration-none"
-            >
-                Venta #{{ forloop.counter }}
-            </a>
-
-            <a
-                href="{% url 'ventas:eliminar_venta_espera' venta.id %}"
-                class="cerrar-tab"
-                onclick="return confirm('¿Eliminar esta venta en espera?')"
-            >
-                X
-            </a>
+        <div class="cart-summary">
+            <div class="summary-row">
+                <strong>Total Bruto:</strong>
+                <span>S/ {{ total|floatformat:2 }}</span>
+            </div>
+            <div class="summary-row">
+                <strong><i class="bi bi-pencil-square me-1"></i>Descuento:</strong>
+                <span id="descuentoPanel">-S/ 0.00</span>
+            </div>
+            <div class="summary-row">
+                <strong>Impuestos:</strong>
+                <span id="impuestoPanel">S/ 0.00</span>
+            </div>
+            <div class="summary-row">
+                <strong>Envío:</strong>
+                <span id="envioPanel">S/ 0.00</span>
+            </div>
+            <div class="summary-row summary-total">
+                <strong>Total Compra:</strong>
+                <span id="totalPanel">S/ {{ total|floatformat:2 }}</span>
+            </div>
         </div>
-    {% endfor %}
+
+        <div class="cart-actions">
+            <button class="btn btn-primary btn-pagar" data-bs-toggle="modal" data-bs-target="#modalPago" {% if not productos_carrito %}disabled{% endif %}>
+                Pagar
+            </button>
+            <a href="{% url 'ventas:guardar_venta_espera' %}" class="btn btn-outline-primary">Espera</a>
+            <a href="{% url 'ventas:limpiar_carrito' %}" class="btn btn-danger">Cancelar</a>
+        </div>
+    </aside>
 </div>
 
-<script>
-    const scannerInput = document.getElementById('codigoScanner');
-
-    if (scannerInput) {
-        scannerInput.focus();
-
-        document.addEventListener('click', function(event) {
-
-            if (
-                event.target.closest('.modal') ||
-                event.target.closest('.cliente-overlay') ||
-                event.target.tagName === 'INPUT' ||
-                event.target.tagName === 'SELECT' ||
-                event.target.tagName === 'TEXTAREA' ||
-                event.target.tagName === 'BUTTON'
-            ) {
-                return;
-            }
-
-            scannerInput.focus();
-        });
-    }
-</script>
+{% if ventas_espera %}
+    <div class="ventas-espera-tabs">
+        {% for venta in ventas_espera %}
+            <div class="btn-group shadow-sm">
+                <a href="{% url 'ventas:cargar_venta_espera' venta.id %}" class="btn btn-primary btn-sm">Espera #{{ forloop.counter }}</a>
+                <a href="{% url 'ventas:eliminar_venta_espera' venta.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar esta venta en espera?')">×</a>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
 
 {% include 'ventas/components/modal_pago.html' %}
 
-
-<div class="modal fade" id="modalDetalleCaja" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-
-        <div class="modal-content">
-
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
-                    Detalle de caja
-                </h5>
-
-                <button
-                    type="button"
-                    class="btn-close btn-close-white"
-                    data-bs-dismiss="modal"
-                ></button>
-            </div>
-
-            <div class="modal-body">
-
-                <div class="row mb-3">
-
-                    <div class="col-md-4">
-                        <div class="alert alert-info">
-                            <strong>Monto inicial</strong><br>
-                            S/ {{ apertura_caja.monto_inicial }}
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="alert alert-success">
-                            <strong>Monto actual</strong><br>
-                            S/ {{ monto_actual_caja }}
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="alert alert-primary">
-                            <strong>Turno</strong><br>
-                            {{ apertura_caja.get_turno_display }}
-                        </div>
-                    </div>
-
-                </div>
-
-                <table class="table table-sm table-bordered align-middle">
-
-                    <thead class="table-light">
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Tipo</th>
-                            <th>Concepto</th>
-                            <th>Monto</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-
-                        {% for mov in movimientos_caja %}
-                            <tr>
-                                <td>
-                                    {{ mov.created|date:"d/m/Y H:i" }}
-                                </td>
-
-                                <td>
-                                    {% if mov.tipo == 'INGRESO' %}
-                                        <span class="badge bg-success">
-                                            Ingreso
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-danger">
-                                            Salida
-                                        </span>
-                                    {% endif %}
-                                </td>
-
-                                <td>
-                                    {{ mov.concepto }}
-                                </td>
-
-                                <td>
-                                    S/ {{ mov.monto }}
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">
-                                    Aún no hay movimientos en esta caja.
-                                </td>
-                            </tr>
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
+<div class="offcanvas offcanvas-end" tabindex="-1" id="panelCaja" aria-labelledby="panelCajaLabel" data-bs-scroll="true">
+    <div class="offcanvas-header border-bottom">
+        <div>
+            <h5 class="offcanvas-title" id="panelCajaLabel">Caja del turno</h5>
+            <small class="text-secondary">Información rápida de la caja abierta</small>
         </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+    </div>
+    <div class="offcanvas-body">
+        {% if sede_actual %}
+            <div class="caja-mini-card mb-3">
+                <div class="text-secondary small">Sede</div>
+                <div class="fw-bold">{{ sede_actual.nombre|upper }}</div>
+            </div>
+        {% endif %}
 
+        {% if apertura_caja %}
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <div class="caja-mini-card">
+                        <div class="text-secondary small">Caja</div>
+                        <div class="fw-bold">{{ apertura_caja.caja.nombre }}</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="caja-mini-card">
+                        <div class="text-secondary small">Turno</div>
+                        <div class="fw-bold">{{ apertura_caja.get_turno_display }}</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="caja-mini-card">
+                        <div class="text-secondary small">Inicial</div>
+                        <div class="fw-bold">S/ {{ apertura_caja.monto_inicial }}</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="caja-mini-card caja-money">
+                        <div class="text-secondary small">Actual</div>
+                        <div class="fw-bold">S/ {{ monto_actual_caja }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalDetalleCaja">
+                    <i class="bi bi-receipt me-1"></i>Detalle de caja
+                </button>
+                <a href="{% url 'ventas:cerrar_caja' %}" class="btn btn-danger">
+                    <i class="bi bi-lock me-1"></i>Cerrar caja
+                </a>
+            </div>
+        {% else %}
+            <div class="alert alert-warning border-0">No tienes una caja abierta para este turno.</div>
+            <a href="{% url 'ventas:abrir_caja' %}" class="btn btn-success w-100">
+                <i class="bi bi-unlock me-1"></i>Abrir caja
+            </a>
+        {% endif %}
     </div>
 </div>
 
+<div class="modal fade" id="modalDetalleCaja" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Detalle de caja</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                {% if apertura_caja %}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <div class="p-3 rounded bg-info-subtle">
+                                <div class="small text-secondary">Monto inicial</div>
+                                <div class="fw-bold">S/ {{ apertura_caja.monto_inicial }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded bg-success-subtle">
+                                <div class="small text-secondary">Monto actual</div>
+                                <div class="fw-bold">S/ {{ monto_actual_caja }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded bg-primary-subtle">
+                                <div class="small text-secondary">Turno</div>
+                                <div class="fw-bold">{{ apertura_caja.get_turno_display }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Concepto</th>
+                                    <th class="text-end">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for mov in movimientos_caja %}
+                                    <tr>
+                                        <td>{{ mov.created|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            {% if mov.tipo == 'INGRESO' %}
+                                                <span class="badge bg-success">Ingreso</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Salida</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ mov.concepto }}</td>
+                                        <td class="text-end">S/ {{ mov.monto }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr><td colspan="4" class="text-center text-secondary py-4">Aún no hay movimientos en esta caja.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-secondary py-4">No hay caja abierta.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'js/pos.js' %}?v=20260708-05"></script>
 {% endblock %}

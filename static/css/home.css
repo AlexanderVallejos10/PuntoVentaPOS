@@ -1,0 +1,3 @@
+/* INICIO_RAPIDO_V2_OK
+   El diseño principal del inicio va embebido en templates/core/home.html
+   para evitar caché y asegurar que el dashboard cambie apenas se reemplace el template. */

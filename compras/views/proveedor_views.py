@@ -159,7 +159,7 @@ def exportar_proveedores_pdf(request):
 
     elementos = []
 
-    # ✅ Cabecera dinámica con logo y datos de empresa
+    # Cabecera dinámica con logo y datos de empresa
     empresa = ConfiguracionEmpresa.obtener_configuracion()
 
     agregar_cabecera_empresa(

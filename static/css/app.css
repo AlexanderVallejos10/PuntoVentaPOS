@@ -1,0 +1,234 @@
+:root {
+    --pos-azul: #23539b;
+    --pos-azul-claro: #3f73c7;
+    --pos-azul-panel: #416db4;
+    --pos-fondo: #f4f7fb;
+    --pos-borde: #e5e7eb;
+    --sidebar-ancho: 92px;
+    --topbar-alto: 58px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--pos-fondo);
+    color: #1f2937;
+    font-family: Arial, sans-serif;
+}
+
+.app-layout {
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: var(--sidebar-ancho);
+    background: var(--pos-azul);
+    color: #fff;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 1030;
+    overflow-y: auto;
+}
+
+
+/* Oculta la barra interna del menú lateral sin bloquear el scroll del menú. */
+.sidebar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+.brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px 6px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, .2);
+}
+
+.brand-logo {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.brand-logo-icon {
+    font-size: 34px;
+    color: #fff;
+}
+
+.brand-name {
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    word-break: break-word;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.brand-user {
+    color: #dbe7ff;
+    font-size: 10px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.menu-item {
+    height: 70px;
+    color: #fff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-size: 12px;
+    text-align: center;
+    padding: 0 4px;
+    margin: 3px 8px;
+    border-radius: 10px;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.menu-item i {
+    font-size: 26px;
+    margin-bottom: 3px;
+}
+
+.menu-item:hover,
+.menu-item:focus,
+.menu-item.active {
+    background: var(--pos-azul-claro);
+    color: #fff;
+    transform: translateX(1px);
+}
+
+.menu-dropdown {
+    position: relative;
+}
+
+.submenu-panel {
+    position: fixed;
+    left: var(--sidebar-ancho);
+    top: var(--topbar-alto);
+    width: 250px;
+    min-height: calc(100vh - var(--topbar-alto));
+    background: var(--pos-azul-panel);
+    display: none;
+    flex-direction: column;
+    padding-top: 12px;
+    z-index: 3000;
+    box-shadow: 8px 0 22px rgba(15, 23, 42, .16);
+}
+
+.menu-dropdown:hover .submenu-panel,
+.menu-dropdown:focus-within .submenu-panel {
+    display: flex;
+}
+
+.submenu-item {
+    color: #fff;
+    text-decoration: none;
+    padding: 11px 16px;
+    font-size: 15px;
+}
+
+.submenu-item:hover,
+.submenu-item:focus {
+    background: rgba(255, 255, 255, .13);
+    color: #fff;
+}
+
+.main-content {
+    min-height: 100vh;
+    margin-left: var(--sidebar-ancho);
+    width: calc(100% - var(--sidebar-ancho));
+}
+
+.topbar {
+    height: var(--topbar-alto);
+    background: var(--pos-azul);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+.topbar-title {
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.topbar i {
+    font-size: 24px;
+}
+
+.content-wrapper {
+    padding: 28px;
+}
+
+.page-card,
+.card-clean,
+.dash-card,
+.chart-card {
+    background: #fff;
+    border: 1px solid var(--pos-borde);
+    border-radius: 12px;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, .08);
+}
+
+.page-card {
+    padding: 24px;
+}
+
+.card-clean {
+    padding: 18px;
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--pos-azul);
+    --bs-btn-border-color: var(--pos-azul);
+    --bs-btn-hover-bg: #1d4785;
+    --bs-btn-hover-border-color: #1d4785;
+}
+
+.table thead th {
+    white-space: nowrap;
+}
+
+.form-control,
+.form-select,
+.btn {
+    border-radius: 8px;
+}
+
+@media (max-width: 991.98px) {
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .content-wrapper {
+        padding: 18px;
+    }
+}

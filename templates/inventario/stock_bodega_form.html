@@ -1,126 +1,286 @@
 {% extends 'base/base.html' %}
 
-{% block title %}
-    {{ titulo }}
+{% block title %}{{ titulo }}{% endblock %}
+{% block body_class %}ajuste-inventario-view{% endblock %}
+
+{% block css %}
+<style>
+    .ajuste-inventario-view .content-wrapper {
+        padding: 18px 28px 18px;
+    }
+
+    .ajuste-inventario {
+        --azul: #23539b;
+        --azul-oscuro: #1d4785;
+        --azul-suave: #eef5ff;
+        --borde: #d7e2ef;
+        --texto: #172033;
+        --gris: #64748b;
+        max-width: 1420px;
+        margin: 0 auto;
+    }
+
+    .ajuste-top {
+        margin-bottom: 16px;
+    }
+
+    .ajuste-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        margin-bottom: 10px;
+        border-radius: 999px;
+        color: var(--azul);
+        background: #e9f2ff;
+        font-weight: 800;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+    .ajuste-top h1 {
+        margin: 0;
+        font-size: clamp(30px, 3.2vw, 44px);
+        line-height: 1.05;
+        font-weight: 800;
+        color: var(--texto);
+        letter-spacing: -.035em;
+    }
+
+    .ajuste-top p {
+        margin: 8px 0 0;
+        color: #52637a;
+        font-size: 15px;
+    }
+
+    .ajuste-panel {
+        background: #fff;
+        border: 1px solid var(--borde);
+        border-radius: 16px;
+        box-shadow: 0 12px 34px rgba(15, 23, 42, .08);
+        padding: 22px;
+    }
+
+    .ajuste-bloque {
+        height: 100%;
+    }
+
+    .ajuste-lateral {
+        height: 100%;
+        border: 1px solid #e4ebf5;
+        border-radius: 14px;
+        padding: 18px;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    }
+
+    .ajuste-subtitulo {
+        margin-bottom: 13px;
+        color: var(--texto);
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .ajuste-label {
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 800;
+        margin-bottom: 6px;
+    }
+
+    .ajuste-inventario .form-control,
+    .ajuste-inventario .form-select {
+        min-height: 44px;
+        border-color: #dbe3ee;
+        border-radius: 10px;
+        font-size: 15px;
+    }
+
+    .ajuste-inventario textarea.form-control {
+        min-height: 108px;
+        resize: vertical;
+    }
+
+    .ajuste-inventario .input-group-text {
+        border-color: #dbe3ee;
+        border-radius: 10px;
+        font-weight: 800;
+        background: #f8fafc;
+    }
+
+    .ajuste-switch {
+        border: 1px solid #dbe3ee;
+        border-radius: 12px;
+        padding: 13px 14px;
+        background: #fff;
+    }
+
+    .ajuste-acciones {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 18px;
+        flex-wrap: wrap;
+    }
+
+    .ajuste-btn {
+        min-height: 46px;
+        min-width: 132px;
+        border-radius: 10px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        white-space: nowrap;
+    }
+
+    .ajuste-nota {
+        margin-top: 14px;
+        color: var(--gris);
+        font-size: 13px;
+        line-height: 1.35;
+    }
+
+    @media (max-width: 767.98px) {
+        .ajuste-inventario-view .content-wrapper {
+            padding: 14px;
+        }
+
+        .ajuste-panel,
+        .ajuste-lateral {
+            padding: 16px;
+        }
+
+        .ajuste-acciones {
+            align-items: stretch;
+            flex-direction: column-reverse;
+        }
+
+        .ajuste-btn {
+            width: 100%;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
+<div class="ajuste-inventario">
+    <div class="ajuste-top">
+        <span class="ajuste-chip">Inventario</span>
+        <h3 style="text-align: center;"><strong>{{ titulo }}</strong></h3>
+	        <p>Completa los datos del producto, asígnalo a una bodega y define su stock inicial.</p>
+    </div>
 
-<style>
-    .stock-form-card {
-        max-width: 620px;
-        background: white;
-        border-radius: 14px;
-        padding: 22px 26px;
-        box-shadow: 0 4px 14px rgba(0,0,0,.07);
-    }
+    <div class="ajuste-panel">
+        <form method="post" novalidate>
+            {% csrf_token %}
 
-    .stock-form-card h1 {
-        font-size: 26px;
-        font-weight: bold;
-        margin-bottom: 18px;
-    }
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger py-2">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
 
-    .stock-form-card label {
-        font-size: 14px;
-        margin-bottom: 4px;
-    }
+            <div class="row g-4 align-items-stretch">
+                <div class="col-xl-7">
+                    <section class="ajuste-bloque">
+                        <div class="ajuste-subtitulo">Datos del producto</div>
 
-    .stock-form-card .mb-3 {
-        margin-bottom: 12px !important;
-    }
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label ajuste-label" for="{{ form.nombre.id_for_label }}">Nombre del producto</label>
+                                {{ form.nombre }}
+                                {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors }}</div>{% endif %}
+                            </div>
 
-    .stock-form-card textarea {
-        resize: vertical;
-    }
-</style>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label ajuste-label" for="{{ form.categoria.id_for_label }}">Categoría</label>
+                                {{ form.categoria }}
+                                {% if form.categoria.errors %}<div class="text-danger small mt-1">{{ form.categoria.errors }}</div>{% endif %}
+                            </div>
 
-<div class="stock-form-card">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label ajuste-label" for="{{ form.sede.id_for_label }}">Bodega</label>
+                                {{ form.sede }}
+                                {% if form.sede.errors %}<div class="text-danger small mt-1">{{ form.sede.errors }}</div>{% endif %}
+                            </div>
 
-    <h1>
-        {{ titulo }}
-    </h1>
+                            <div class="col-12">
+                                <label class="form-label ajuste-label" for="{{ form.descripcion.id_for_label }}">Descripción</label>
+                                {{ form.descripcion }}
+                                {% if form.descripcion.errors %}<div class="text-danger small mt-1">{{ form.descripcion.errors }}</div>{% endif %}
+                            </div>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} py-2">
-                {{ message }}
+                            <div class="col-12">
+                                <label class="form-label ajuste-label" for="{{ form.imagen_url.id_for_label }}">URL de imagen</label>
+                                {{ form.imagen_url }}
+                                {% if form.imagen_url.errors %}<div class="text-danger small mt-1">{{ form.imagen_url.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="col-xl-5">
+                    <aside class="ajuste-lateral">
+                        <div class="ajuste-subtitulo">Precios y stock</div>
+
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6 col-xl-12">
+                                <label class="form-label ajuste-label" for="{{ form.precio_compra.id_for_label }}">Valor de compra</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">S/</span>
+                                    {{ form.precio_compra }}
+                                </div>
+                                {% if form.precio_compra.errors %}<div class="text-danger small mt-1">{{ form.precio_compra.errors }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12 col-md-6 col-xl-12">
+                                <label class="form-label ajuste-label" for="{{ form.precio_venta.id_for_label }}">Valor de venta</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">S/</span>
+                                    {{ form.precio_venta }}
+                                </div>
+                                {% if form.precio_venta.errors %}<div class="text-danger small mt-1">{{ form.precio_venta.errors }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label ajuste-label" for="{{ form.stock.id_for_label }}">Stock inicial</label>
+                                {{ form.stock }}
+                                {% if form.stock.errors %}<div class="text-danger small mt-1">{{ form.stock.errors }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label ajuste-label" for="{{ form.stock_minimo.id_for_label }}">Stock mínimo</label>
+                                {{ form.stock_minimo }}
+                                {% if form.stock_minimo.errors %}<div class="text-danger small mt-1">{{ form.stock_minimo.errors }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-check form-switch ajuste-switch">
+                                    {{ form.activo }}
+                                    <label class="form-check-label fw-bold" for="{{ form.activo.id_for_label }}">Producto activo</label>
+                                </div>
+                                {% if form.activo.errors %}<div class="text-danger small mt-1">{{ form.activo.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="ajuste-acciones">
+                            <a href="{% url 'inventario:inventario_producto_list' %}" class="btn btn-outline-secondary ajuste-btn">
+                                Cancelar
+                            </a>
+                            <button class="btn btn-primary ajuste-btn" type="submit">
+                                Guardar
+                            </button>
+                        </div>
+
+                        <div class="ajuste-nota">
+                            El stock mínimo servirá para detectar productos con baja existencia.
+                        </div>
+                    </aside>
+                </div>
             </div>
-        {% endfor %}
-    {% endif %}
-
-    <form method="post">
-
-        {% csrf_token %}
-
-        <div class="mb-3">
-            <label class="form-label fw-bold">Nombre del producto</label>
-            {{ form.nombre }}
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-bold">Categoría</label>
-            {{ form.categoria }}
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-bold">Descripción</label>
-            {{ form.descripcion }}
-        </div>
-
-        <div class="row">
-
-            <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Valor de compra</label>
-                {{ form.precio_compra }}
-            </div>
-
-            <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Valor de venta</label>
-                {{ form.precio_venta }}
-            </div>
-
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-bold">URL de imagen</label>
-            {{ form.imagen_url }}
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-bold">Bodega</label>
-            {{ form.sede }}
-        </div>
-
-        <div class="row">
-
-            <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Stock inicial</label>
-                {{ form.stock }}
-            </div>
-
-            <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Stock mínimo</label>
-                {{ form.stock_minimo }}
-            </div>
-
-        </div>
-
-        <div class="form-check mb-3">
-            {{ form.activo }}
-            <label class="form-check-label">Activo</label>
-        </div>
-
-        <button class="btn btn-primary btn-sm">
-            Guardar
-        </button>
-
-        <a href="{% url 'inventario:inventario_producto_list' %}" class="btn btn-secondary btn-sm">
-            Cancelar
-        </a>
-
-    </form>
-
+        </form>
+    </div>
 </div>
-
 {% endblock %}

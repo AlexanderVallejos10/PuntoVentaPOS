@@ -22,13 +22,12 @@ def exportar_clientes_excel(request):
 
     hoja.append([
         'Item',
-        'Nombre',
+        'Nombre / razón social',
         'Tipo documento',
         'Número documento',
         'Teléfono',
         'Correo',
         'Dirección',
-        'Municipio',
         'Estado',
     ])
 
@@ -36,13 +35,12 @@ def exportar_clientes_excel(request):
         hoja.append([
             index,
             cliente.nombre,
-            getattr(cliente, 'tipo_documento', ''),
-            cliente.numero_documento,
+            cliente.tipo_documento,
+            cliente.numero_documento or '',
             cliente.telefono or '',
-            getattr(cliente, 'correo', '') or getattr(cliente, 'email', ''),
+            cliente.email or '',
             cliente.direccion or '',
-            getattr(cliente, 'municipio', ''),
-            'Activo' if getattr(cliente, 'activo', True) else 'Inactivo',
+            'Activo' if cliente.activo else 'Inactivo',
         ])
 
     response = HttpResponse(
@@ -65,19 +63,12 @@ def exportar_clientes_pdf(request):
         rightMargin=40,
         leftMargin=40,
         topMargin=40,
-        bottomMargin=30
+        bottomMargin=30,
     )
 
     elementos = []
-
-    # ✅ Cabecera dinámica con logo y datos de empresa
     empresa = ConfiguracionEmpresa.obtener_configuracion()
-
-    agregar_cabecera_empresa(
-        elementos,
-        empresa,
-        'Lista de Clientes'
-    )
+    agregar_cabecera_empresa(elementos, empresa, 'Lista de clientes')
 
     data = [[
         'Item',
@@ -87,36 +78,27 @@ def exportar_clientes_pdf(request):
         'Correo',
     ]]
 
-    clientes = Cliente.objects.all().order_by('nombre')
-
-    for index, cliente in enumerate(clientes, start=1):
-        correo = getattr(cliente, 'correo', '') or getattr(cliente, 'email', '')
-
+    for index, cliente in enumerate(Cliente.objects.all().order_by('nombre'), start=1):
         data.append([
             str(index),
             str(cliente.nombre),
-            str(cliente.numero_documento),
+            str(cliente.numero_documento or '-'),
             str(cliente.telefono or '-'),
-            str(correo or '-'),
+            str(cliente.email or '-'),
         ])
 
-    tabla = Table(
-        data,
-        colWidths=[35, 160, 100, 90, 130]
-    )
-
+    tabla = Table(data, colWidths=[35, 160, 100, 90, 130])
     tabla.setStyle(TableStyle([
-        ('FONTNAME',      (0, 0), (-1, 0),  'Helvetica-Bold'),
-        ('FONTSIZE',      (0, 0), (-1, -1), 9),
-        ('BOTTOMPADDING', (0, 0), (-1, 0),  12),
-        ('TOPPADDING',    (0, 1), (-1, -1), 7),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('TOPPADDING', (0, 1), (-1, -1), 7),
         ('BOTTOMPADDING', (0, 1), (-1, -1), 7),
-        ('ALIGN',         (0, 0), (-1, -1), 'LEFT'),
-        ('TEXTCOLOR',     (0, 0), (-1, 0),  colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
     ]))
 
     elementos.append(tabla)
-
     doc.build(elementos)
 
     return response

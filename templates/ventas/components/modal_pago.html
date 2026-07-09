@@ -1,521 +1,175 @@
-<style>
-    #modalPago .modal-dialog {
-        max-width: 820px;
-    }
-
-    #modalPago .modal-content {
-        border-radius: 7px;
-        overflow: hidden;
-    }
-
-    #modalPago .modal-header,
-    #modalCrearCliente .modal-header {
-        background: #1e5aa8;
-        color: white;
-        padding: 14px 24px;
-    }
-
-    #modalPago .modal-title,
-    #modalCrearCliente .modal-title {
-        font-size: 28px;
-        font-weight: 500;
-    }
-
-    #modalPago .modal-body {
-        padding: 18px 24px;
-    }
-
-    .modal-pago-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 24px;
-    }
-
-    .pago-box {
-        background: #eef4ff;
-        border-radius: 6px;
-        padding: 14px 18px;
-        margin-bottom: 12px;
-        font-weight: bold;
-    }
-
-    .btn-monto {
-        height: 42px;
-        font-size: 18px;
-    }
-
-    .total-pagar-label {
-        color: #0d57a4;
-        font-weight: bold;
-        text-align: center;
-        font-size: 20px;
-    }
-
-    .total-pagar {
-        font-size: 42px;
-        font-weight: bold;
-        text-align: center;
-    }
-
-    .btn-procesar-pago {
-        background: #1e5aa8;
-        color: white;
-        border: none;
-        padding: 10px 28px;
-        border-radius: 6px;
-        font-size: 20px;
-    }
-
-    .envio-box {
-        display: none;
-        margin-top: 10px;
-    }
-
-    .alerta-cortesia {
-        display: none;
-        background: #fff3cd;
-        color: #856404;
-        border-radius: 5px;
-        padding: 6px 8px;
-        font-size: 12px;
-        margin-top: 8px;
-    }
-</style>
-
-<!-- ===================== MODAL PAGO ===================== -->
 <div class="modal fade" id="modalPago" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-
-            <div class="modal-header border-0">
-                <h2 class="modal-title">Información de pago</h2>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-primary text-white">
+                <div>
+                    <h2 class="modal-title h4 mb-0">Cobrar venta</h2>
+                    <small class="text-white-50">Boleta, factura o venta rápida según corresponda.</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
 
             <form method="post" action="{% url 'ventas:confirmar_venta' %}" id="formPago" novalidate>
                 {% csrf_token %}
-
                 <div class="modal-body">
-                    <div class="modal-pago-grid">
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Tipo de comprobante</label>
+                                <select name="tipo_comprobante" id="tipoComprobante" class="form-select form-select-lg">
+                                    <option value="BOLETA" selected>Boleta</option>
+                                    <option value="FACTURA">Factura</option>
+                                    <option value="TICKET">Ticket interno</option>
+                                </select>
+                                <div id="ayudaComprobante" class="form-text">
+                                    Para factura selecciona un cliente con RUC. Para boletas mayores a S/ 700 se exige documento.
+                                </div>
+                            </div>
 
-                        <!-- COLUMNA IZQUIERDA -->
-                        <div>
-                            <label class="fw-bold mb-2">Cliente</label>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Cliente</label>
+                                <select name="cliente_id" id="clienteId" class="form-select form-select-lg">
+                                    <option value="" selected data-tipo="SD" data-documento="">Consumidor final / venta rápida</option>
+                                    {% for cliente in clientes %}
+                                        <option value="{{ cliente.id }}" data-tipo="{{ cliente.tipo_documento|default:'SD' }}" data-documento="{{ cliente.numero_documento|default:'' }}">
+                                            {{ cliente.nombre|upper }}{% if cliente.numero_documento %} - {{ cliente.numero_documento }}{% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
 
-                            <select
-                                name="cliente_id"
-                                id="clienteId"
-                                class="form-select form-select-lg mb-2"
-                                required
-                            >
-                                <option value="" selected disabled>
-                                    Seleccionar cliente
-                                </option>
-
-                                {% for cliente in clientes %}
-                                    <option value="{{ cliente.id }}">
-                                        {{ cliente.nombre|upper }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-
-                            <button
-                                type="button"
-                                class="btn btn-outline-primary w-100 mb-3"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalCrearCliente"
-                            >
-                                + Crear cliente nuevo
+                            <button type="button" class="btn btn-outline-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#modalCrearCliente">
+                                <i class="bi bi-person-plus me-1"></i>Agregar datos del cliente
                             </button>
 
-                            <!-- DESCUENTO -->
-                            <div class="pago-box">
-                                <label class="fw-bold">Descuento (%)</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    max="100"
-                                    name="descuento_porcentaje"
-                                    id="descuentoPorcentaje"
-                                    class="form-control mt-1"
-                                    value="0"
-                                    oninput="actualizarPago()"
-                                >
-                            </div>
-
-                            <!-- CORTESÍA -->
-                            <div class="pago-box">
-                                <input
-                                    type="checkbox"
-                                    name="cortesia"
-                                    id="cortesiaCheck"
-                                    class="form-check-input me-2"
-                                    onchange="actualizarPago()"
-                                >
-                                Cortesía
-
-                                <br>
-
-                                <small class="text-muted ms-4">
-                                    Esta opción se usa para obsequiar el pedido
-                                </small>
-
-                                <div id="alertaCortesia" class="alerta-cortesia">
-                                    ⚠ El pedido será cortesía y no generará ingreso.
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Descuento (%)</label>
+                                    <input type="number" step="0.01" min="0" max="100" name="descuento_porcentaje" id="descuentoPorcentaje" class="form-control" value="0">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Método de pago</label>
+                                    <select name="metodo_pago" id="metodoPago" class="form-select">
+                                        <option value="EFECTIVO">Efectivo</option>
+                                        <option value="YAPE">Yape</option>
+                                        <option value="PLIN">Plin</option>
+                                        <option value="TARJETA">Tarjeta</option>
+                                    </select>
                                 </div>
                             </div>
 
-                            <!-- ENVÍO -->
-                            <div class="pago-box">
-                                <input
-                                    type="checkbox"
-                                    name="envio_domicilio"
-                                    id="envioCheck"
-                                    class="form-check-input me-2"
-                                    onchange="mostrarEnvio(); actualizarPago();"
-                                >
-                                Envío a domicilio
+                            <div class="form-check form-switch mt-3">
+                                <input type="checkbox" name="cortesia" id="cortesiaCheck" class="form-check-input">
+                                <label for="cortesiaCheck" class="form-check-label fw-semibold">Cortesía</label>
+                                <div id="alertaCortesia" class="alert alert-warning py-2 mt-2 d-none">La venta queda en S/ 0.00 y no genera ingreso.</div>
+                            </div>
 
-                                <div id="envioBox" class="envio-box">
-                                    <input
-                                        type="text"
-                                        name="origen_envio"
-                                        class="form-control mb-2"
-                                        placeholder="Punto de origen"
-                                    >
+                            <div class="form-check form-switch mt-3">
+                                <input type="checkbox" name="envio_domicilio" id="envioCheck" class="form-check-input">
+                                <label for="envioCheck" class="form-check-label fw-semibold">Envío a domicilio</label>
+                            </div>
 
-                                    <input
-                                        type="text"
-                                        name="destino_envio"
-                                        class="form-control mb-2"
-                                        placeholder="Punto de destino"
-                                    >
-
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        name="costo_envio"
-                                        id="costoEnvio"
-                                        class="form-control"
-                                        value="0"
-                                        placeholder="Costo de envío"
-                                        oninput="actualizarPago()"
-                                    >
-                                </div>
+                            <div id="envioBox" class="row g-2 mt-1 d-none">
+                                <div class="col-md-6"><input type="text" name="origen_envio" class="form-control" placeholder="Origen"></div>
+                                <div class="col-md-6"><input type="text" name="destino_envio" class="form-control" placeholder="Destino"></div>
+                                <div class="col-md-6"><input type="number" step="0.01" name="costo_envio" id="costoEnvio" class="form-control" value="0" placeholder="Costo de envío"></div>
                             </div>
                         </div>
 
-                        <!-- COLUMNA DERECHA -->
-                        <div>
-                            <label class="fw-bold mb-2">Método de pago</label>
+                        <div class="col-lg-6">
+                            <div class="bg-light rounded-4 p-3 mb-3">
+                                <label class="form-label fw-semibold" id="labelMontoRecibido">Efectivo recibido</label>
+                                <input type="number" step="0.01" name="monto_recibido" id="montoRecibido" class="form-control form-control-lg text-center" placeholder="Monto pagado">
+                                <div id="errorMonto" class="invalid-feedback d-block d-none">Ingrese un monto válido.</div>
 
-                            <select
-                                name="metodo_pago"
-                                id="metodoPago"
-                                class="form-select form-select-lg mb-3"
-                                onchange="actualizarPago()"
-                            >
-                                <option value="EFECTIVO">EFECTIVO</option>
-                                <option value="YAPE">YAPE</option>
-                                <option value="PLIN">PLIN</option>
-                                <option value="TARJETA">TARJETA</option>
-                            </select>
-
-                            <div class="row g-2 mb-3">
-                                <div class="col-4">
-                                    <button type="button" class="btn btn-light border w-100 btn-monto" onclick="setMonto(10)">10</button>
-                                </div>
-                                <div class="col-4">
-                                    <button type="button" class="btn btn-light border w-100 btn-monto" onclick="setMonto(20)">20</button>
-                                </div>
-                                <div class="col-4">
-                                    <button type="button" class="btn btn-light border w-100 btn-monto" onclick="setMonto(50)">50</button>
-                                </div>
-                                <div class="col-4">
-                                    <button type="button" class="btn btn-light border w-100 btn-monto" onclick="setMonto(100)">100</button>
-                                </div>
-                                <div class="col-4">
-                                    <button type="button" class="btn btn-light border w-100 btn-monto" onclick="setMonto(200)">200</button>
-                                </div>
-                                <div class="col-4">
-                                    <button type="button" class="btn btn-light border w-100 btn-monto" onclick="setMontoExacto()">Exacto</button>
+                                <div class="row g-2 mt-3">
+                                    <div class="col-4"><button type="button" class="btn btn-outline-secondary w-100" data-monto="10">10</button></div>
+                                    <div class="col-4"><button type="button" class="btn btn-outline-secondary w-100" data-monto="20">20</button></div>
+                                    <div class="col-4"><button type="button" class="btn btn-outline-secondary w-100" data-monto="50">50</button></div>
+                                    <div class="col-4"><button type="button" class="btn btn-outline-secondary w-100" data-monto="100">100</button></div>
+                                    <div class="col-4"><button type="button" class="btn btn-outline-secondary w-100" data-monto="200">200</button></div>
+                                    <div class="col-4"><button type="button" class="btn btn-outline-primary w-100" id="btnMontoExacto">Exacto</button></div>
                                 </div>
                             </div>
 
-                            <label class="fw-bold" id="labelMontoRecibido">
-                                EFECTIVO RECIBIDO
-                            </label>
+                            <input type="hidden" name="subtotal" id="subtotalVenta" value="{{ total }}">
+                            <input type="hidden" name="descuento" id="descuentoVenta" value="0">
+                            <input type="hidden" name="impuesto" id="impuestoVenta" value="0">
+                            <input type="hidden" name="total_final" id="totalFinalVenta" value="{{ total }}">
 
-                            <input
-                                type="number"
-                                step="0.01"
-                                name="monto_recibido"
-                                id="montoRecibido"
-                                class="form-control form-control-lg text-center mb-1"
-                                placeholder="Digite valor pagado"
-                            >
-
-                            <div id="errorMonto" class="text-danger small mb-2" style="display:none;">
-                                Ingrese el monto recibido.
-                            </div>
-
-                            <!-- HIDDEN FIELDS -->
-                            <input type="hidden" name="subtotal"    id="subtotalVenta"    value="{{ total }}">
-                            <input type="hidden" name="descuento"   id="descuentoVenta"   value="0">
-                            <input type="hidden" name="impuesto"    id="impuestoVenta"    value="0">
-                            <input type="hidden" name="total_final" id="totalFinalVenta"  value="{{ total }}">
-
-                            <div class="total-pagar-label">TOTAL A PAGAR</div>
-
-                            <div class="total-pagar" id="totalPagarTexto">
-                                S/ {{ total }}
-                            </div>
-
-                            <div class="text-end mt-4">
-                                <button type="submit" class="btn-procesar-pago">
-                                    Procesar pago
+                            <div class="text-center border rounded-4 p-4">
+                                <div class="text-secondary fw-semibold">Total a pagar</div>
+                                <div class="display-5 fw-bold" id="totalPagarTexto">S/ {{ total|floatformat:2 }}</div>
+                                <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">
+                                    <i class="bi bi-check2-circle me-1"></i>Registrar cobro
                                 </button>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </form>
-
         </div>
     </div>
 </div>
 
-<!-- ===================== MODAL CREAR CLIENTE ===================== -->
 <div class="modal fade" id="modalCrearCliente" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg" style="border-radius:8px; overflow:hidden;">
-
-            <div class="modal-header border-0">
-                <h4 class="modal-title fw-bold" style="font-size:22px;">Crear Cliente</h4>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h4 class="modal-title">Datos del cliente</h4>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
 
             <form id="formCrearCliente">
                 {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nombre / razón social</label>
+                        <input type="text" class="form-control" id="nombreCliente" name="nombre" placeholder="Ej. Juan Pérez o Comercial ABC" required>
+                    </div>
 
-                <div class="modal-body p-4">
-
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label fw-bold">Tipo Documento</label>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Documento</label>
                             <select class="form-select" id="tipoDocumentoCliente" name="tipo_documento">
+                                <option value="SD" selected>Sin documento</option>
                                 <option value="DNI">DNI</option>
                                 <option value="RUC">RUC</option>
                                 <option value="CE">CE</option>
                             </select>
                         </div>
-
-                        <div class="col-md-5 mb-3">
-                            <label class="form-label fw-bold">Número Documento</label>
-                            <input
-                                type="text"
-                                class="form-control"
-                                id="numeroDocumentoCliente"
-                                name="numero_documento"
-                            >
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold">Número</label>
+                            <input type="text" class="form-control" id="numeroDocumentoCliente" name="numero_documento" placeholder="Opcional">
                         </div>
-
-                        <div class="col-md-3 mb-3 d-flex align-items-end">
-                            <button type="button" class="btn btn-primary w-100" id="btnBuscarCliente">
-                                Buscar
-                            </button>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary w-100" id="btnBuscarCliente">Consultar</button>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Nombre / Razón social</label>
-                        <input type="text" class="form-control" id="nombreCliente" name="nombre" required>
-                    </div>
+                    <p class="form-text mt-2 mb-3">Usa consumidor final para ventas rápidas. Registra DNI/RUC cuando el cliente lo pida o el total supere S/ 700.</p>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Teléfono</label>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Teléfono</label>
                             <input type="text" class="form-control" name="telefono">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Correo</label>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Correo</label>
                             <input type="email" class="form-control" name="email">
                         </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Dirección</label>
+                            <input type="text" class="form-control" name="direccion">
+                        </div>
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Dirección</label>
-                        <input type="text" class="form-control" name="direccion">
-                    </div>
-
                 </div>
 
-                <div class="modal-footer justify-content-center border-top">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-primary px-4">
-                        Guardar cliente
-                    </button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Usar cliente</button>
                 </div>
             </form>
-
         </div>
     </div>
 </div>
-
-<script>
-    const totalBase = Number("{{ total|floatformat:2 }}".replace(",", "."));
-
-    // Enfocar número de documento al abrir el modal de crear cliente
-    document.getElementById('modalCrearCliente').addEventListener('shown.bs.modal', function () {
-        document.getElementById('numeroDocumentoCliente').focus();
-    });
-
-    function mostrarEnvio() {
-        const envioCheck = document.getElementById('envioCheck');
-        const envioBox   = document.getElementById('envioBox');
-        envioBox.style.display = envioCheck.checked ? 'block' : 'none';
-    }
-
-    function actualizarPago() {
-        const cortesia           = document.getElementById('cortesiaCheck').checked;
-        const envioCheck         = document.getElementById('envioCheck').checked;
-        const costoEnvio         = envioCheck ? Number(document.getElementById('costoEnvio').value || 0) : 0;
-        const metodoPago         = document.getElementById('metodoPago').value;
-        const montoRecibido      = document.getElementById('montoRecibido');
-        const alertaCortesia     = document.getElementById('alertaCortesia');
-        const labelMonto         = document.getElementById('labelMontoRecibido');
-        const descuentoPorcentaje = Number(document.getElementById('descuentoPorcentaje').value || 0);
-
-        let subtotal         = totalBase;
-        let descuento        = subtotal * (descuentoPorcentaje / 100);
-        let baseConDescuento = subtotal - descuento;
-        let impuesto         = baseConDescuento * 0.18;
-        let totalFinal       = baseConDescuento + impuesto + costoEnvio;
-
-        if (cortesia) {
-            descuento  = subtotal;
-            impuesto   = 0;
-            totalFinal = 0;
-
-            montoRecibido.value    = 0;
-            montoRecibido.disabled = true;
-            alertaCortesia.style.display = 'block';
-        } else {
-            montoRecibido.disabled = false;
-            alertaCortesia.style.display = 'none';
-        }
-
-        if (metodoPago !== 'EFECTIVO' && !cortesia) {
-            montoRecibido.value = totalFinal.toFixed(2);
-        }
-
-        labelMonto.innerText = metodoPago + ' RECIBIDO';
-
-        document.getElementById('descuentoVenta').value  = descuento.toFixed(2);
-        document.getElementById('impuestoVenta').value   = impuesto.toFixed(2);
-        document.getElementById('totalFinalVenta').value = totalFinal.toFixed(2);
-        document.getElementById('totalPagarTexto').innerText = 'S/ ' + totalFinal.toFixed(2);
-
-        const descuentoPanel = document.getElementById('descuentoPanel');
-        const impuestoPanel  = document.getElementById('impuestoPanel');
-        const envioPanel     = document.getElementById('envioPanel');
-        const totalPanel     = document.getElementById('totalPanel');
-
-        if (descuentoPanel) descuentoPanel.innerText = '-S/ ' + descuento.toFixed(2);
-        if (impuestoPanel)  impuestoPanel.innerText  = 'S/ '  + impuesto.toFixed(2);
-        if (envioPanel)     envioPanel.innerText      = 'S/ '  + costoEnvio.toFixed(2);
-        if (totalPanel)     totalPanel.innerText      = 'S/ '  + totalFinal.toFixed(2);
-    }
-
-    function setMonto(valor) {
-        document.getElementById('montoRecibido').value = valor;
-    }
-
-    function setMontoExacto() {
-        document.getElementById('montoRecibido').value =
-            document.getElementById('totalFinalVenta').value;
-    }
-
-    // Validación al enviar el formulario de pago
-    document.getElementById('formPago').addEventListener('submit', function(e) {
-        const clienteId  = document.getElementById('clienteId').value;
-        const cortesia   = document.getElementById('cortesiaCheck').checked;
-        const monto      = document.getElementById('montoRecibido');
-        const errorMonto = document.getElementById('errorMonto');
-
-        if (!clienteId) {
-            e.preventDefault();
-            alert('Seleccione o cree un cliente antes de vender.');
-            return;
-        }
-
-        if (!cortesia && (!monto.value || Number(monto.value) <= 0)) {
-            e.preventDefault();
-            errorMonto.style.display = 'block';
-            monto.focus();
-            return;
-        }
-
-        errorMonto.style.display = 'none';
-    });
-
-    // Buscar cliente por documento
-    document.getElementById('btnBuscarCliente').addEventListener('click', function () {
-        const tipo   = document.getElementById('tipoDocumentoCliente').value;
-        const numero = document.getElementById('numeroDocumentoCliente').value;
-
-        if (!numero) {
-            alert('Ingrese un número de documento.');
-            return;
-        }
-
-        fetch(`/clientes/buscar-documento/?tipo_documento=${tipo}&numero_documento=${numero}`)
-            .then(r => r.json())
-            .then(data => {
-                if (data.ok) {
-                    document.getElementById('nombreCliente').value = data.nombre;
-                } else {
-                    alert(data.mensaje);
-                }
-            })
-            .catch(() => alert('Error al consultar documento.'));
-    });
-
-    // Guardar cliente nuevo
-    document.getElementById('formCrearCliente').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        fetch("{% url 'clientes:cliente_create_ajax' %}", {
-            method: 'POST',
-            body: new FormData(this),
-            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.ok) {
-                const selectCliente = document.getElementById('clienteId');
-                const option = new Option(data.nombre, data.id, true, true);
-                selectCliente.add(option);
-                selectCliente.value = data.id;
-
-                bootstrap.Modal.getInstance(
-                    document.getElementById('modalCrearCliente')
-                ).hide();
-
-                this.reset();
-                alert('Cliente creado y seleccionado correctamente.');
-            } else {
-                alert(data.error || 'No se pudo crear el cliente.');
-            }
-        })
-        .catch(() => alert('Error al crear el cliente.'));
-    });
-
-    document.addEventListener('DOMContentLoaded', function () {
-        actualizarPago();
-    });
-</script>

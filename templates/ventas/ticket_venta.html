@@ -1,102 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Ticket Venta #{{ venta.id }}</title>
-
+    <meta charset="utf-8">
+    <title>{{ venta.comprobante_nombre }} {{ venta.comprobante_codigo }}</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            width: 58mm;
-            font-size: 12px;
-        }
-
-        .center {
-            text-align: center;
-        }
-
-        .titulo {
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        td {
-            padding: 3px 0;
-        }
-
-        .total {
-            font-size: 16px;
-            font-weight: bold;
-            text-align: right;
-        }
-
-        .acciones {
-            margin-top: 20px;
-        }
-
-        @media print {
-            .acciones {
-                display: none;
-            }
-        }
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { margin: 0; background: #fff; color: #000; font-size: 12px; }
+        .ticket { width: 58mm; padding: 8px; }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        .right { text-align: right; }
+        hr { border: 0; border-top: 1px dashed #000; margin: 8px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 3px 0; vertical-align: top; }
+        .total { font-size: 16px; font-weight: bold; }
+        .acciones { margin-top: 16px; }
+        @media print { .acciones { display: none; } }
     </style>
 </head>
 <body>
-
-    <div class="center titulo">
-        PuntoVentaPOS
-    </div>
-
-    <div class="center">
-        Ticket #{{ venta.id }}
-    </div>
-
-    <div class="center">
-        {{ venta.fecha|date:"d/m/Y H:i" }}
-    </div>
+<div class="ticket">
+    <div class="center bold">PuntoVentaPOS</div>
+    <div class="center">{{ venta.comprobante_nombre }} {{ venta.comprobante_codigo }}</div>
+    <div class="center">{{ venta.created|date:"d/m/Y H:i" }}</div>
 
     <hr>
 
+    {% if venta.cliente %}
+        <div><strong>Cliente:</strong> {{ venta.cliente.nombre }}</div>
+        {% if venta.cliente.numero_documento %}<div><strong>Doc:</strong> {{ venta.cliente.tipo_documento }} {{ venta.cliente.numero_documento }}</div>{% endif %}
+        <hr>
+    {% endif %}
+
     <table>
         {% for detalle in venta.detalles.all %}
+            <tr><td colspan="2">{{ detalle.producto.nombre }}</td></tr>
             <tr>
-                <td colspan="2">
-                    {{ detalle.producto.nombre }}
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    {{ detalle.cantidad }} x S/ {{ detalle.precio_unitario }}
-                </td>
-                <td style="text-align:right;">
-                    S/ {{ detalle.subtotal }}
-                </td>
+                <td>{{ detalle.cantidad }} x S/ {{ detalle.precio_unitario|floatformat:2 }}</td>
+                <td class="right">S/ {{ detalle.subtotal|floatformat:2 }}</td>
             </tr>
         {% endfor %}
     </table>
 
     <hr>
-
-    <div class="total">
-        TOTAL: S/ {{ venta.total }}
-    </div>
-
+    <table>
+        <tr><td>Subtotal</td><td class="right">S/ {{ venta.subtotal|floatformat:2 }}</td></tr>
+        <tr><td>IGV</td><td class="right">S/ {{ venta.impuesto|floatformat:2 }}</td></tr>
+        <tr class="total"><td>Total</td><td class="right">S/ {{ venta.total|floatformat:2 }}</td></tr>
+    </table>
     <hr>
-
-    <div class="center">
-        Gracias por su compra
-    </div>
-
-    <div class="acciones">
-        <button onclick="window.print()">
-            Imprimir ticket
-        </button>
-    </div>
-
+    <div class="center">Gracias por su compra</div>
+    <div class="acciones"><button onclick="window.print()">Imprimir ticket</button></div>
+</div>
 </body>
 </html>

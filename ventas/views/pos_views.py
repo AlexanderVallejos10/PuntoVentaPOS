@@ -1,4 +1,4 @@
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 from io import BytesIO
 
 import openpyxl
@@ -21,11 +21,18 @@ from usuarios.decorators import vendedor_required
 from usuarios.models import UsuarioSede
 from ventas.models import Venta, DetalleVenta, AperturaCaja, MovimientoCaja
 from reportlab.lib import colors
-from ventas.models.detalle_venta import DetalleVenta
-
-
-def money(valor):
-    return Decimal(str(valor)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+from ventas.services.reglas_peru import (
+    calcular_totales,
+    dinero as money,
+    normalizar_tipo_comprobante,
+    serie_por_tipo,
+    validar_cliente_venta,
+)
+from ventas.services.pos_service import (
+    calcular_subtotal_carrito as subtotal_carrito,
+    registrar_detalles_y_stock,
+    validar_stock_carrito as validar_stock_pos,
+)
 
 
 def dibujar_cabecera_pdf(pdf):
@@ -110,7 +117,7 @@ def obtener_caja_abierta_usuario(usuario):
     ).first()
 
 
-# ─── Solo usado para admins que quieren cambiar de sede manualmente ───────────
+# Selección manual de sede para administradores
 def obtener_sede_pos(request):
     usuario = request.user
 
@@ -154,77 +161,21 @@ def seleccionar_sede_pos(request):
 
 
 def validar_stock_carrito(carrito, sede):
-    if not sede:
-        return False, 'No hay sede seleccionada para vender.'
-
-    for producto_id, item in carrito.items():
-        producto = get_object_or_404(Producto, id=producto_id)
-        cantidad = int(item['cantidad'])
-
-        if cantidad <= 0:
-            return False, f'Cantidad inválida para {producto.nombre}.'
-
-        stock_bodega = StockBodega.objects.filter(
-            producto=producto,
-            sede=sede,
-            activo=True
-        ).first()
-
-        if not stock_bodega:
-            return False, f'{producto.nombre} no tiene stock en la sede {sede.nombre}.'
-
-        if cantidad > stock_bodega.stock:
-            return False, (
-                f'Stock insuficiente para {producto.nombre}. '
-                f'Stock disponible en {sede.nombre}: {stock_bodega.stock}.'
-            )
-
-    return True, ''
+    return validar_stock_pos(carrito, sede)
 
 
 def calcular_subtotal_carrito(carrito):
-    subtotal = Decimal('0.00')
-
-    for producto_id, item in carrito.items():
-        producto = get_object_or_404(Producto, id=producto_id)
-        cantidad = Decimal(str(item['cantidad']))
-        subtotal += producto.precio_venta * cantidad
-
-    return money(subtotal)
+    return subtotal_carrito(carrito)
 
 
 def calcular_totales_venta(request, subtotal):
-    cortesia = request.POST.get('cortesia') == 'on'
-    envio_domicilio = request.POST.get('envio_domicilio') == 'on'
-
-    descuento_porcentaje = money(request.POST.get('descuento_porcentaje') or 0)
-    costo_envio = money(request.POST.get('costo_envio') or 0) if envio_domicilio else Decimal('0.00')
-
-    if descuento_porcentaje < 0:
-        descuento_porcentaje = Decimal('0.00')
-
-    if descuento_porcentaje > 100:
-        descuento_porcentaje = Decimal('100.00')
-
-    if cortesia:
-        descuento = subtotal
-        impuesto = Decimal('0.00')
-        total = Decimal('0.00')
-        costo_envio = Decimal('0.00')
-    else:
-        descuento = money(subtotal * descuento_porcentaje / Decimal('100'))
-        base = subtotal - descuento
-        impuesto = money(base * Decimal('0.18'))
-        total = money(base + impuesto + costo_envio)
-
-    return {
-        'cortesia': cortesia,
-        'envio_domicilio': envio_domicilio,
-        'descuento': descuento,
-        'impuesto': impuesto,
-        'costo_envio': costo_envio,
-        'total': total,
-    }
+    return calcular_totales(
+        subtotal=subtotal,
+        descuento_porcentaje=request.POST.get('descuento_porcentaje') or 0,
+        costo_envio=request.POST.get('costo_envio') or 0,
+        cortesia=request.POST.get('cortesia') == 'on',
+        envio_domicilio=request.POST.get('envio_domicilio') == 'on',
+    )
 
 
 @vendedor_required
@@ -332,16 +283,23 @@ def agregar_producto_scanner(request):
     sede_actual = apertura_caja.caja.sede
 
     if request.method == 'POST':
+        producto_id = request.POST.get('producto_id')
         codigo = request.POST.get('codigo', '').strip()
 
-        if not codigo:
-            messages.error(request, 'Debes ingresar o escanear un código.')
-            return redirect('ventas:pos_venta')
+        if producto_id:
+            producto = Producto.objects.filter(id=producto_id, activo=True).first()
+        else:
+            if not codigo:
+                messages.error(request, 'Debes ingresar o escanear un código.')
+                return redirect('ventas:pos_venta')
 
-        producto = Producto.objects.filter(codigo=codigo, activo=True).first()
+            producto = Producto.objects.filter(codigo=codigo, activo=True).first()
 
         if not producto:
-            messages.error(request, f'No existe producto con código: {codigo}')
+            if producto_id:
+                messages.error(request, 'El producto seleccionado no existe o está inactivo.')
+            else:
+                messages.error(request, f'No existe producto con código: {codigo}')
             return redirect('ventas:pos_venta')
 
         stock_bodega = StockBodega.objects.filter(
@@ -428,7 +386,7 @@ def guardar_venta_espera(request):
 
     guardar_carrito(request, {})
 
-    messages.success(request, f'Venta #{venta.id} guardada en espera.')
+    messages.success(request, f'Venta en espera #{venta.id} guardada.')
     return redirect('ventas:pos_venta')
 
 
@@ -474,7 +432,7 @@ def cargar_venta_espera(request, venta_id):
     request.session['venta_espera_id'] = venta.id
     request.session.modified = True
 
-    messages.success(request, f'Venta #{venta.id} cargada correctamente.')
+    messages.success(request, f'Venta en espera #{venta.id} cargada correctamente.')
     return redirect('ventas:pos_venta')
 
 
@@ -520,6 +478,28 @@ def confirmar_venta(request):
     metodo_pago = request.POST.get('metodo_pago', 'EFECTIVO')
     monto_recibido = money(request.POST.get('monto_recibido') or 0)
     cliente_id = request.POST.get('cliente_id') or None
+    cliente = None
+
+    if cliente_id:
+        cliente = Cliente.objects.filter(id=cliente_id, activo=True).first()
+
+        if not cliente:
+            messages.error(request, 'El cliente seleccionado no existe o está inactivo.')
+            return redirect('ventas:pos_venta')
+
+    tipo_comprobante = normalizar_tipo_comprobante(
+        request.POST.get('tipo_comprobante')
+    )
+
+    cliente_ok, mensaje_cliente = validar_cliente_venta(
+        totales['total'],
+        cliente,
+        tipo_comprobante,
+    )
+
+    if not cliente_ok:
+        messages.error(request, mensaje_cliente)
+        return redirect('ventas:pos_venta')
 
     if totales['cortesia']:
         monto_recibido = Decimal('0.00')
@@ -546,52 +526,38 @@ def confirmar_venta(request):
             estado='PAGADA'
         )
 
-    for producto_id, item in carrito.items():
-        producto = get_object_or_404(Producto, id=producto_id)
-        cantidad = int(item['cantidad'])
+    try:
+        registrar_detalles_y_stock(venta, carrito, sede_actual)
+    except ValueError as error:
+        transaction.set_rollback(True)
+        messages.error(request, str(error))
+        return redirect('ventas:pos_venta')
 
-        stock_bodega = get_object_or_404(
-            StockBodega,
-            producto=producto,
-            sede=sede_actual,
-            activo=True
-        )
-
-        subtotal = money(producto.precio_venta * cantidad)
-
-        DetalleVenta.objects.create(
-            venta=venta,
-            producto=producto,
-            cantidad=cantidad,
-            precio_unitario=producto.precio_venta,
-            subtotal=subtotal
-        )
-
-        stock_bodega.stock -= cantidad
-        stock_bodega.save()
-
-    venta.cliente_id      = cliente_id
-    venta.sede            = sede_actual
-    venta.subtotal        = subtotal_venta
-    venta.descuento       = totales['descuento']
-    venta.impuesto        = totales['impuesto']
-    venta.total           = totales['total']
-    venta.metodo_pago     = metodo_pago
-    venta.monto_recibido  = monto_recibido
-    venta.cambio          = cambio
-    venta.cortesia        = totales['cortesia']
-    venta.envio_domicilio = totales['envio_domicilio']
-    venta.origen_envio    = request.POST.get('origen_envio') or ''
-    venta.destino_envio   = request.POST.get('destino_envio') or ''
-    venta.costo_envio     = totales['costo_envio']
-    venta.estado          = 'PAGADA'
+    venta.cliente            = cliente
+    venta.sede               = sede_actual
+    venta.tipo_comprobante   = tipo_comprobante
+    venta.serie_comprobante  = venta.serie_comprobante or serie_por_tipo(tipo_comprobante)
+    venta.numero_comprobante = venta.numero_comprobante or f'{venta.id:08d}'
+    venta.subtotal           = subtotal_venta
+    venta.descuento          = totales['descuento']
+    venta.impuesto           = totales['impuesto']
+    venta.total              = totales['total']
+    venta.metodo_pago        = metodo_pago
+    venta.monto_recibido     = monto_recibido
+    venta.cambio             = cambio
+    venta.cortesia           = totales['cortesia']
+    venta.envio_domicilio    = totales['envio_domicilio']
+    venta.origen_envio       = request.POST.get('origen_envio') or ''
+    venta.destino_envio      = request.POST.get('destino_envio') or ''
+    venta.costo_envio        = totales['costo_envio']
+    venta.estado             = 'PAGADA'
     venta.save()
 
     MovimientoCaja.objects.create(
         apertura=apertura_caja,
         venta=venta,
         tipo='INGRESO',
-        concepto=f'Venta #{venta.id:06d}',
+        concepto=f'Venta {venta.comprobante_codigo}',
         monto=venta.total
     )
 
@@ -600,7 +566,7 @@ def confirmar_venta(request):
     request.session.pop('venta_espera_id', None)
     request.session.modified = True
 
-    messages.success(request, f'Venta #{venta.id} registrada correctamente.')
+    messages.success(request, f'Venta {venta.comprobante_codigo} registrada correctamente.')
 
     return redirect('ventas:resumen_venta', venta_id=venta.id)
 
@@ -730,7 +696,7 @@ def imprimir_carta(request, venta_id):
     return render(request, 'ventas/imprimir_carta.html', {'venta': venta, 'empresa': empresa})
 
 
-# ─── Función auxiliar: genera PDF de la venta ────────────────────────────────
+# PDF de comprobante
 def generar_pdf_venta(venta, empresa):
     buffer = BytesIO()
 
@@ -754,7 +720,7 @@ def generar_pdf_venta(venta, empresa):
 
     y -= 35
     pdf.setFont('Helvetica-Bold', 14)
-    pdf.drawString(50, y, f'COMPROBANTE DE VENTA #{venta.id:06d}')
+    pdf.drawString(50, y, f'{venta.comprobante_nombre.upper()} {venta.comprobante_codigo}')
 
     y -= 25
     pdf.setFont('Helvetica', 10)
@@ -811,7 +777,7 @@ def generar_pdf_venta(venta, empresa):
     return buffer
 
 
-# ─── Vista: enviar factura por correo con PDF adjunto ────────────────────────
+# Envío de comprobante por correo
 @vendedor_required
 def enviar_factura_correo(request, venta_id):
     venta = get_object_or_404(
@@ -842,7 +808,7 @@ def enviar_factura_correo(request, venta_id):
                 use_tls=True
             )
 
-            asunto = f'Comprobante de venta #{venta.id:06d} - {empresa.nombre_empresa}'
+            asunto = f'{venta.comprobante_nombre} {venta.comprobante_codigo} - {empresa.nombre_empresa}'
 
             cuerpo = f"""
 Hola {venta.cliente.nombre if venta.cliente else 'cliente'},
@@ -850,7 +816,7 @@ Hola {venta.cliente.nombre if venta.cliente else 'cliente'},
 Adjuntamos el resumen de su compra realizada en {empresa.nombre_empresa}.
 
 Detalle de venta:
-Comprobante: #{venta.id:06d}
+Comprobante: {venta.comprobante_codigo}
 Fecha: {venta.created.strftime('%d/%m/%Y %H:%M')}
 Total: S/ {venta.total}
 Método de pago: {venta.metodo_pago}
@@ -870,14 +836,14 @@ Gracias por su compra.
 
             pdf_buffer = generar_pdf_venta(venta, empresa)
             email.attach(
-                f'comprobante_venta_{venta.id:06d}.pdf',
+                f'comprobante_{venta.comprobante_codigo}.pdf',
                 pdf_buffer.getvalue(),
                 'application/pdf'
             )
 
             email.send()
 
-            messages.success(request, 'Factura enviada correctamente al correo del cliente.')
+            messages.success(request, 'Comprobante enviado correctamente al correo del cliente.')
             return redirect('ventas:resumen_venta', venta_id=venta.id)
 
         except Exception as error:
@@ -920,6 +886,8 @@ def historial_ventas(request):
     if buscar:
         ventas = ventas.filter(
             Q(id__icontains=buscar)
+            | Q(serie_comprobante__icontains=buscar)
+            | Q(numero_comprobante__icontains=buscar)
             | Q(cliente__nombre__icontains=buscar)
             | Q(metodo_pago__icontains=buscar)
             | Q(sede__nombre__icontains=buscar)
@@ -952,7 +920,7 @@ def historial_ventas(request):
     )
 
 
-# ─── Función auxiliar: filtrar ventas para exportaciones ─────────────────────
+# Filtro común para historial y exportaciones
 def filtrar_historial_ventas(request):
     buscar = request.GET.get('buscar', '').strip()
     estado = request.GET.get('estado', '').strip()
@@ -977,6 +945,8 @@ def filtrar_historial_ventas(request):
     if buscar:
         ventas = ventas.filter(
             Q(id__icontains=buscar)
+            | Q(serie_comprobante__icontains=buscar)
+            | Q(numero_comprobante__icontains=buscar)
             | Q(cliente__nombre__icontains=buscar)
             | Q(metodo_pago__icontains=buscar)
             | Q(sede__nombre__icontains=buscar)
@@ -995,7 +965,7 @@ def exportar_historial_ventas_excel(request):
 
     hoja.append([
         'Item',
-        'Factura',
+        'Comprobante',
         'Fecha',
         'Cliente',
         'Sede',
@@ -1017,7 +987,7 @@ def exportar_historial_ventas_excel(request):
 
         hoja.append([
             index,
-            f'{venta.id:06d}',
+            venta.comprobante_codigo,
             venta.created.strftime('%d/%m/%Y %H:%M'),
             venta.cliente.nombre if venta.cliente else 'Cliente general',
             venta.sede.nombre if venta.sede else '',
@@ -1112,7 +1082,7 @@ def exportar_historial_ventas_pdf(request):
 
     pdf.setFont('Helvetica-Bold', 7)
     pdf.drawString(40, y, 'Item')
-    pdf.drawString(70, y, 'Factura')
+    pdf.drawString(70, y, 'Comprobante')
     pdf.drawString(120, y, 'Fecha')
     pdf.drawString(205, y, 'Cliente')
     pdf.drawString(330, y, 'Sede')
@@ -1137,7 +1107,7 @@ def exportar_historial_ventas_pdf(request):
 
             pdf.setFont('Helvetica-Bold', 7)
             pdf.drawString(40, y, 'Item')
-            pdf.drawString(70, y, 'Factura')
+            pdf.drawString(70, y, 'Comprobante')
             pdf.drawString(120, y, 'Fecha')
             pdf.drawString(205, y, 'Cliente')
             pdf.drawString(330, y, 'Sede')
@@ -1157,7 +1127,7 @@ def exportar_historial_ventas_pdf(request):
         ).first()
 
         pdf.drawString(40, y, str(index))
-        pdf.drawString(70, y, f'{venta.id:06d}')
+        pdf.drawString(70, y, venta.comprobante_codigo)
         pdf.drawString(120, y, venta.created.strftime('%d/%m/%Y %H:%M'))
         pdf.drawString(205, y, (venta.cliente.nombre if venta.cliente else 'Cliente general')[:22])
         pdf.drawString(330, y, (venta.sede.nombre if venta.sede else '-')[:10])
@@ -1222,7 +1192,7 @@ def devolver_venta_ajax(request, venta_id):
         apertura=movimiento_original.apertura,
         venta=venta,
         tipo='SALIDA',
-        concepto=f'Devolución venta #{venta.id:06d}',
+        concepto=f'Devolución venta {venta.comprobante_codigo}',
         monto=venta.total
     )
 
@@ -1267,7 +1237,7 @@ def eliminar_venta_ajax(request, venta_id):
             apertura=movimiento_original.apertura,
             venta=venta,
             tipo='SALIDA',
-            concepto=f'Anulación venta #{venta.id:06d}',
+            concepto=f'Anulación venta {venta.comprobante_codigo}',
             monto=venta.total
         )
 
@@ -1302,119 +1272,158 @@ def editar_venta(request, venta_id):
     ).select_related('apertura').first()
 
     if request.method == 'POST':
-
         total_anterior = venta.total
-
         producto_ids = request.POST.getlist('producto_id[]')
-        cantidades   = request.POST.getlist('cantidad[]')
-        precios      = request.POST.getlist('precio_unitario[]')
+        cantidades = request.POST.getlist('cantidad[]')
+        precios = request.POST.getlist('precio_unitario[]')
 
-        # 1. Devolver stock anterior
+        nuevos_detalles = []
+        subtotal_nuevo = Decimal('0.00')
+        cantidades_actuales = {}
+
         for detalle in venta.detalles.all():
-            stock = StockBodega.objects.filter(
-                producto=detalle.producto,
-                sede=venta.sede
-            ).first()
+            producto_id = detalle.producto_id
+            cantidades_actuales[producto_id] = cantidades_actuales.get(producto_id, 0) + int(detalle.cantidad)
 
-            if stock:
-                stock.stock += detalle.cantidad
-                stock.save()
-
-        # 2. Eliminar detalles anteriores
-        venta.detalles.all().delete()
-
-        nuevo_subtotal = Decimal('0.00')
-
-        # 3. Crear nuevos detalles y descontar stock
-        for producto_id, cantidad, precio in zip(producto_ids, cantidades, precios):
-
+        for producto_id, cantidad_raw, precio_raw in zip(producto_ids, cantidades, precios):
             if not producto_id:
                 continue
 
             producto = get_object_or_404(Producto, id=producto_id)
-            cantidad = int(cantidad or 0)
-            precio   = Decimal(str(precio or 0))
+
+            try:
+                cantidad = int(cantidad_raw or 0)
+                precio = money(precio_raw or 0)
+            except (TypeError, ValueError):
+                messages.error(request, f'Revise la cantidad o precio de {producto.nombre}.')
+                return redirect('ventas:editar_venta', venta_id=venta.id)
 
             if cantidad <= 0:
-                continue
+                messages.error(request, f'La cantidad de {producto.nombre} debe ser mayor a cero.')
+                return redirect('ventas:editar_venta', venta_id=venta.id)
 
             stock = StockBodega.objects.filter(
                 producto=producto,
-                sede=venta.sede
+                sede=venta.sede,
+                activo=True,
             ).first()
 
-            if not stock:
-                messages.error(
-                    request,
-                    f'No existe stock para {producto.nombre} en esta sede.'
-                )
-                raise Exception('Stock no encontrado')
+            disponible = (stock.stock if stock else 0) + cantidades_actuales.get(producto.id, 0)
 
-            if stock.stock < cantidad:
-                messages.error(
-                    request,
-                    f'Stock insuficiente para {producto.nombre}.'
-                )
-                raise Exception('Stock insuficiente')
+            if cantidad > disponible:
+                messages.error(request, f'Stock insuficiente para {producto.nombre}. Disponible: {disponible}.')
+                return redirect('ventas:editar_venta', venta_id=venta.id)
 
-            subtotal        = precio * cantidad
-            nuevo_subtotal += subtotal
+            subtotal = money(precio * cantidad)
+            subtotal_nuevo += subtotal
+            nuevos_detalles.append((producto, cantidad, precio, subtotal))
 
+        solicitadas = {}
+        productos_por_id = {}
+
+        for producto, cantidad, _, _ in nuevos_detalles:
+            solicitadas[producto.id] = solicitadas.get(producto.id, 0) + cantidad
+            productos_por_id[producto.id] = producto
+
+        for producto_id, cantidad_total in solicitadas.items():
+            producto = productos_por_id[producto_id]
+            stock = StockBodega.objects.filter(
+                producto=producto,
+                sede=venta.sede,
+                activo=True,
+            ).first()
+            disponible = (stock.stock if stock else 0) + cantidades_actuales.get(producto_id, 0)
+
+            if cantidad_total > disponible:
+                messages.error(request, f'Stock insuficiente para {producto.nombre}. Disponible: {disponible}.')
+                return redirect('ventas:editar_venta', venta_id=venta.id)
+
+        if not nuevos_detalles:
+            messages.error(request, 'La venta debe tener al menos un producto.')
+            return redirect('ventas:editar_venta', venta_id=venta.id)
+
+        descuento = money(request.POST.get('descuento') or 0)
+        impuesto = money(request.POST.get('impuesto') or 0)
+        costo_envio = money(request.POST.get('costo_envio') or 0)
+        metodo_pago = request.POST.get('metodo_pago') or venta.metodo_pago
+        total_nuevo = money(subtotal_nuevo - descuento + impuesto + costo_envio)
+
+        cliente_ok, mensaje_cliente = validar_cliente_venta(
+            total_nuevo,
+            venta.cliente,
+            venta.tipo_comprobante,
+        )
+
+        if not cliente_ok:
+            messages.error(request, mensaje_cliente)
+            return redirect('ventas:editar_venta', venta_id=venta.id)
+
+        monto_recibido = money(request.POST.get('monto_recibido') or total_nuevo)
+
+        if metodo_pago == 'EFECTIVO' and monto_recibido < total_nuevo:
+            messages.error(request, 'El monto recibido no puede ser menor al total.')
+            return redirect('ventas:editar_venta', venta_id=venta.id)
+
+        for detalle in venta.detalles.select_related('producto').all():
+            stock = StockBodega.objects.filter(
+                producto=detalle.producto,
+                sede=venta.sede,
+                activo=True,
+            ).first()
+            if stock:
+                stock.stock += detalle.cantidad
+                stock.save(update_fields=['stock'])
+
+        venta.detalles.all().delete()
+
+        for producto, cantidad, precio, subtotal in nuevos_detalles:
             DetalleVenta.objects.create(
                 venta=venta,
                 producto=producto,
                 cantidad=cantidad,
                 precio_unitario=precio,
-                subtotal=subtotal
+                subtotal=subtotal,
             )
 
+            stock = StockBodega.objects.select_for_update().filter(
+                producto=producto,
+                sede=venta.sede,
+                activo=True,
+            ).first()
             stock.stock -= cantidad
-            stock.save()
+            stock.save(update_fields=['stock'])
 
-        descuento   = Decimal(request.POST.get('descuento')   or 0)
-        impuesto    = Decimal(request.POST.get('impuesto')    or 0)
-        costo_envio = Decimal(request.POST.get('costo_envio') or 0)
-        metodo_pago = request.POST.get('metodo_pago')
-
-        total_nuevo    = nuevo_subtotal - descuento + impuesto + costo_envio
-        monto_recibido = Decimal(request.POST.get('monto_recibido') or total_nuevo)
-
-        venta.subtotal       = nuevo_subtotal
-        venta.descuento      = descuento
-        venta.impuesto       = impuesto
-        venta.costo_envio    = costo_envio
-        venta.total          = total_nuevo
-        venta.metodo_pago    = metodo_pago
+        venta.subtotal = money(subtotal_nuevo)
+        venta.descuento = descuento
+        venta.impuesto = impuesto
+        venta.costo_envio = costo_envio
+        venta.total = total_nuevo
+        venta.metodo_pago = metodo_pago
         venta.monto_recibido = monto_recibido
-        venta.cambio         = monto_recibido - total_nuevo
+        venta.cambio = money(monto_recibido - total_nuevo)
         venta.save()
 
-        # 4. Ajustar caja según diferencia
         diferencia = total_nuevo - total_anterior
 
         if movimiento_original and diferencia != 0:
             if diferencia > 0:
-                tipo     = 'INGRESO'
-                monto    = diferencia
-                concepto = f'Aumento por edición venta #{venta.id:06d}'
+                tipo = 'INGRESO'
+                monto = diferencia
+                concepto = f'Aumento por edición venta {venta.comprobante_codigo}'
             else:
-                tipo     = 'SALIDA'
-                monto    = abs(diferencia)
-                concepto = f'Disminución por edición venta #{venta.id:06d}'
+                tipo = 'SALIDA'
+                monto = abs(diferencia)
+                concepto = f'Disminución por edición venta {venta.comprobante_codigo}'
 
             MovimientoCaja.objects.create(
                 apertura=movimiento_original.apertura,
                 venta=venta,
                 tipo=tipo,
                 concepto=concepto,
-                monto=monto
+                monto=monto,
             )
 
-        messages.success(
-            request,
-            'Venta editada correctamente. Stock y caja actualizados.'
-        )
-
+        messages.success(request, 'Venta editada correctamente. Stock y caja actualizados.')
         return redirect('ventas:historial_ventas')
 
     productos = Producto.objects.all().order_by('nombre')
@@ -1429,7 +1438,7 @@ def editar_venta(request, venta_id):
     )
 
 
-# ─── Detalle de ventas (línea por línea) ─────────────────────────────────────
+# Detalle de ventas
 @vendedor_required
 def detalle_ventas(request):
     buscar = request.GET.get('buscar', '').strip()
@@ -1452,6 +1461,8 @@ def detalle_ventas(request):
     if buscar:
         detalles = detalles.filter(
             Q(venta__id__icontains=buscar)
+            | Q(venta__serie_comprobante__icontains=buscar)
+            | Q(venta__numero_comprobante__icontains=buscar)
             | Q(producto__nombre__icontains=buscar)
             | Q(venta__cliente__nombre__icontains=buscar)
             | Q(venta__sede__nombre__icontains=buscar)
@@ -1477,7 +1488,7 @@ def detalle_ventas(request):
     )
 
 
-# ─── Ventas agrupadas por categoría ──────────────────────────────────────────
+# Ventas agrupadas por categoría
 @vendedor_required
 def ventas_por_categoria(request):
     categoria_id = request.GET.get('categoria', '').strip()
@@ -1549,6 +1560,8 @@ def exportar_detalle_ventas_excel(request):
             Q(producto__nombre__icontains=buscar)
             | Q(venta__cliente__nombre__icontains=buscar)
             | Q(venta__id__icontains=buscar)
+            | Q(venta__serie_comprobante__icontains=buscar)
+            | Q(venta__numero_comprobante__icontains=buscar)
         )
 
     workbook = openpyxl.Workbook()
@@ -1557,7 +1570,7 @@ def exportar_detalle_ventas_excel(request):
     hoja.title = 'Detalle Ventas'
 
     hoja.append([
-        'Factura',
+        'Comprobante',
         'Sede',
         'Caja',
         'Fecha',
@@ -1579,7 +1592,7 @@ def exportar_detalle_ventas_excel(request):
             caja = movimiento.apertura.caja.nombre
 
         hoja.append([
-            str(detalle.venta.id).zfill(6),
+            detalle.venta.comprobante_codigo,
             detalle.venta.sede.nombre if detalle.venta.sede else '-',
             caja,
             detalle.venta.created.strftime('%d/%m/%Y %H:%M'),
@@ -1622,6 +1635,15 @@ def exportar_detalle_ventas_pdf(request):
             venta__movimientocaja__apertura__usuario=request.user
         ).distinct()
 
+    if buscar:
+        detalles = detalles.filter(
+            Q(producto__nombre__icontains=buscar)
+            | Q(venta__cliente__nombre__icontains=buscar)
+            | Q(venta__id__icontains=buscar)
+            | Q(venta__serie_comprobante__icontains=buscar)
+            | Q(venta__numero_comprobante__icontains=buscar)
+        )
+
     response = HttpResponse(content_type='application/pdf')
 
     response[
@@ -1641,7 +1663,7 @@ def exportar_detalle_ventas_pdf(request):
 
     pdf.setFont('Helvetica-Bold', 8)
 
-    headers = ['Factura', 'Producto', 'Cliente', 'Cant', 'Precio', 'Total']
+    headers = ['Comprobante', 'Producto', 'Cliente', 'Cant', 'Precio', 'Total']
     x_positions = [40, 100, 220, 380, 430, 500]
 
     for i, header in enumerate(headers):
@@ -1662,7 +1684,7 @@ def exportar_detalle_ventas_pdf(request):
         if detalle.venta.cliente:
             cliente = detalle.venta.cliente.nombre
 
-        pdf.drawString(40, y, str(detalle.venta.id).zfill(6))
+        pdf.drawString(40, y, detalle.venta.comprobante_codigo[:12])
         pdf.drawString(100, y, detalle.producto.nombre[:24])
         pdf.drawString(220, y, cliente[:20])
         pdf.drawString(380, y, str(detalle.cantidad))

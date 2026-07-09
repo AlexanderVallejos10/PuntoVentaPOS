@@ -1,38 +1,53 @@
 {% extends 'base/base.html' %}
 
+{% block title %}Importar clientes{% endblock %}
+
 {% block content %}
 
-<div class="container py-4">
+<div class="page-card mx-auto" style="max-width: 640px;">
 
-    <div class="card p-4">
-
-        <h2>Importar Clientes</h2>
-
-        <a
-            href="{% url 'clientes:descargar_ejemplo_clientes' %}"
-            class="btn btn-success mb-3"
-        >
-            Descargar ejemplo
-        </a>
-
-        <form method="POST" enctype="multipart/form-data">
-
-            {% csrf_token %}
-
-            <input
-                type="file"
-                name="archivo"
-                class="form-control mb-3"
-                required
-            >
-
-            <button class="btn btn-primary">
-                Importar
-            </button>
-
-        </form>
-
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary-subtle text-primary-emphasis flex-shrink-0" style="width:48px; height:48px;">
+            <i class="bi bi-upload fs-4"></i>
+        </div>
+        <div>
+            <h1 class="h4 fw-bold mb-0">Importar clientes</h1>
+            <p class="text-secondary small mb-0">Carga varios clientes de una vez desde un archivo Excel.</p>
+        </div>
     </div>
+
+    <div class="bg-light rounded-3 p-3 mb-4 small text-secondary">
+        <i class="bi bi-info-circle me-1"></i>
+        ¿Primera vez? Descarga la plantilla de ejemplo, complétala con tus clientes y súbela aquí abajo.
+    </div>
+
+    <a
+        href="{% url 'clientes:descargar_ejemplo_clientes' %}"
+        class="btn btn-outline-success mb-4"
+    >
+        <i class="bi bi-file-earmark-arrow-down me-1"></i>
+        Descargar plantilla de ejemplo
+    </a>
+
+    <form method="POST" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <label class="form-label fw-bold">Archivo de clientes</label>
+
+        <input
+            type="file"
+            name="archivo"
+            class="form-control mb-3"
+            required
+        >
+
+        <button class="btn btn-primary">
+            <i class="bi bi-upload me-1"></i>
+            Importar clientes
+        </button>
+
+    </form>
 
 </div>
 

@@ -1,35 +1,37 @@
-from django.shortcuts import render, get_object_or_404
+from decimal import Decimal
 
-from clientes.models.cliente import Cliente
-from ventas.models.venta import Venta
+from django.shortcuts import get_object_or_404, render
+
+from clientes.models import Cliente
+from usuarios.decorators import vendedor_required
+from ventas.models import Venta
 
 
+@vendedor_required
 def cliente_detalle(request, cliente_id):
-
-    cliente = get_object_or_404(
-        Cliente,
-        id=cliente_id
-    )
+    cliente = get_object_or_404(Cliente, id=cliente_id)
 
     ventas = Venta.objects.filter(
         cliente=cliente
+    ).select_related(
+        'cliente',
+        'sede',
     ).order_by('-created')
 
     resumen_metodos = {}
 
     for venta in ventas:
-
-        metodo = venta.metodo_pago or 'EFECTIVO'
+        metodo = venta.get_metodo_pago_display() if hasattr(venta, 'get_metodo_pago_display') else venta.metodo_pago
+        metodo = metodo or 'Efectivo'
 
         if metodo not in resumen_metodos:
             resumen_metodos[metodo] = {
-                'total': 0,
-                'devoluciones': 0,
-                'creditos': 0,
-                'debitos': 0
+                'total': Decimal('0.00'),
+                'operaciones': 0,
             }
 
-        resumen_metodos[metodo]['total'] += venta.total
+        resumen_metodos[metodo]['total'] += venta.total or Decimal('0.00')
+        resumen_metodos[metodo]['operaciones'] += 1
 
     return render(
         request,
@@ -37,6 +39,6 @@ def cliente_detalle(request, cliente_id):
         {
             'cliente': cliente,
             'ventas': ventas,
-            'resumen_metodos': resumen_metodos
+            'resumen_metodos': resumen_metodos,
         }
     )

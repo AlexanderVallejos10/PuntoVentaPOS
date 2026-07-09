@@ -1,222 +1,394 @@
 {% extends 'base/base.html' %}
 
-{% block title %}
-    Listado de productos
-{% endblock %}
+{% block title %}Listado de productos{% endblock %}
 
-{% block content %}
-
+{% block css %}
 <style>
-    .page-title {
+    /* INVENTARIO_PRODUCTOS_BOOTSTRAP_53_OK */
+    .inventario-page {
+        padding: 10px 12px 22px;
+    }
+
+    .inventario-title {
+        color: #132033;
+        font-size: 30px;
+        font-weight: 800;
+        letter-spacing: -.02em;
         text-align: center;
-        font-weight: 700;
-        font-size: 28px;
+        margin: 0 0 18px;
+    }
+
+    .inventario-toolbar {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
         margin-bottom: 10px;
     }
 
-    .inventario-wrapper {
-        padding: 8px 10px;
+    .inventario-toolbar label,
+    .inventario-filter label {
+        color: #0f172a;
+        font-weight: 700;
+    }
+
+    .inventario-export {
+        min-width: 120px;
+        text-align: center;
+    }
+
+    .inventario-export-title {
+        color: #0f172a;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+
+    .export-btn {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: #fff;
+        border: 1px solid #dbe3ee;
+        text-decoration: none;
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .export-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, .10);
+    }
+
+    .export-btn i {
+        font-size: 22px;
     }
 
     .inventario-card {
-        background: white;
-        border-radius: 8px;
-        padding: 18px;
-        box-shadow: 0 3px 12px rgba(0,0,0,.06);
+        background: #fff;
+        border: 1px solid #dbe3ee;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .08);
+        padding: 18px 18px 14px;
     }
 
-    .top-line {
-        display: flex;
-        justify-content: space-between;
-        align-items: end;
-        margin-bottom: 10px;
+    .inventario-filter {
+        margin-bottom: 18px;
     }
 
-    .export-box {
-        text-align: center;
-        font-size: 15px;
+    .inventario-filter .form-select,
+    .inventario-filter .form-control {
+        min-height: 42px;
+        border-color: #d8e0eb;
+        font-size: 16px;
     }
 
-    .export-icons i {
-        font-size: 30px;
-        margin: 0 5px;
-        cursor: pointer;
-    }
-
-    .filter-row {
-        display: grid;
-        grid-template-columns: 250px 250px 1fr 340px;
-        gap: 14px;
-        align-items: end;
-        margin-bottom: 22px;
-    }
-
-    .tool-icons {
+    .tool-list {
         display: flex;
         justify-content: center;
-        gap: 28px;
+        align-items: end;
+        gap: 18px;
+        min-height: 60px;
+    }
+
+    .tool-link {
+        color: #0457a8;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 72px;
         text-align: center;
-        font-size: 14px;
-        line-height: 16px;
-    }
-
-    .tool-icons a {
-        color: #0d57a4;
         text-decoration: none;
+        line-height: 1.05;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 2px 4px;
+        border-radius: 10px;
+        transition: background .15s ease, transform .15s ease;
     }
 
-    .tool-icons i {
+    .tool-link:hover {
+        background: #eef5ff;
+        color: #033f7d;
+        transform: translateY(-1px);
+    }
+
+    .tool-link i {
         font-size: 30px;
-        display: block;
+        line-height: 1;
+        margin-top: 3px;
     }
 
     .search-area {
         display: flex;
-        gap: 8px;
         align-items: center;
+        gap: 8px;
     }
 
-    .btn-nuevo {
-        background: #2453a6;
-        color: white;
+    .search-area .form-control {
+        min-width: 210px;
+    }
+
+    .btn-producto-nuevo {
+        min-height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 22px;
         border-radius: 8px;
-        padding: 7px 18px;
+        background: #2453a6;
+        border: 1px solid #2453a6;
+        color: #fff;
+        font-weight: 800;
         text-decoration: none;
-        font-weight: bold;
-        border: none;
+        box-shadow: 0 6px 16px rgba(36, 83, 166, .18);
     }
 
-    .btn-nuevo:hover {
-        color: white;
-        background: #1d478f;
+    .btn-producto-nuevo:hover {
+        background: #1e478f;
+        border-color: #1e478f;
+        color: #fff;
+    }
+
+    .inventario-table-wrap {
+        border: 1px solid #d8dde6;
+        border-radius: 8px;
+        overflow: hidden;
     }
 
     .tabla-inventario {
         font-size: 14px;
+        margin: 0;
     }
 
-    .tabla-inventario th {
+    .tabla-inventario thead th {
         background: #e7e7e7;
+        border: 1px solid #d7d7d7;
+        color: #0f172a;
+        font-weight: 800;
         text-align: center;
         vertical-align: middle;
-        border: 1px solid #d8d8d8;
-        padding: 10px 6px;
-        font-weight: 700;
+        padding: 12px 8px;
+        white-space: nowrap;
     }
 
-    .tabla-inventario td {
+    .tabla-inventario tbody td {
+        border: 1px solid #e1e5ec;
         text-align: center;
         vertical-align: middle;
-        border: 1px solid #e1e1e1;
-        padding: 7px 6px;
+        padding: 8px 8px;
     }
 
-    .tabla-inventario .nombre {
-        text-align: left;
+    .tabla-inventario tbody tr:hover td {
+        background: #f8fbff;
+    }
+
+    .tabla-inventario .col-nombre {
         min-width: 310px;
+        text-align: left;
+    }
+
+    .producto-img-mini,
+    .sin-imagen {
+        width: 58px;
+        height: 58px;
+        border-radius: 8px;
+        background: #f8fafc;
+        border: 1px solid #dde3ec;
     }
 
     .producto-img-mini {
-        width: 55px;
-        height: 55px;
         object-fit: contain;
-        border-radius: 8px;
-        background: #f8f9fa;
-        border: 1px solid #e5e5e5;
-        padding: 3px;
+        padding: 4px;
     }
 
     .sin-imagen {
-        width: 55px;
-        height: 55px;
-        border-radius: 8px;
-        background: #f8f9fa;
-        border: 1px solid #e5e5e5;
-        display: flex;
-        justify-content: center;
+        display: inline-flex;
         align-items: center;
-        margin: auto;
-        color: #999;
+        justify-content: center;
+        color: #8a96a8;
+        font-size: 22px;
     }
 
-    .estado-activo {
-        background: #5ba36a;
-        color: white;
-        padding: 3px 8px;
-        border-radius: 6px;
-        font-weight: bold;
+    .codigo-texto {
+        color: #111827;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .stock-texto {
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .badge-activo {
+        background: #55a869;
+        color: #fff;
+        border-radius: 7px;
+        display: inline-block;
         font-size: 12px;
+        font-weight: 800;
+        padding: 5px 10px;
     }
 
-    .icon-ok {
-        color: #06164f;
-        font-size: 18px;
-        font-weight: bold;
-    }
-
+    .icon-ok,
     .icon-no {
-        color: red;
-        font-size: 18px;
-        font-weight: bold;
+        font-size: 20px;
+        font-weight: 900;
+        line-height: 1;
     }
 
-    .action-icon {
-        font-size: 19px;
-        margin: 0 3px;
+    .icon-ok { color: #06164f; }
+    .icon-no { color: #f00000; }
+
+    .acciones-producto {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .accion-btn {
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 7px;
+        background: #fff;
+        border: 1px solid transparent;
         text-decoration: none;
+        transition: background .15s ease, border-color .15s ease;
     }
 
-    .barcode-icon { color: #0d57a4; }
-    .edit-icon    { color: #333;    }
-    .delete-icon  { color: red;     }
+    .accion-btn i {
+        font-size: 19px;
+    }
 
-    @media(max-width: 1300px) {
-        .filter-row {
-            grid-template-columns: 1fr 1fr;
+    .accion-btn.barcode { color: #0457a8; }
+    .accion-btn.editar { color: #243041; }
+    .accion-btn.eliminar { color: #f00000; }
+
+    .accion-btn:hover {
+        background: #f3f7fc;
+        border-color: #dbe3ee;
+    }
+
+    .inventario-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 14px;
+        color: #526074;
+        font-size: 14px;
+    }
+
+    @media (max-width: 1400px) {
+        .tool-list {
+            gap: 12px;
+        }
+
+        .tool-link {
+            min-width: 64px;
+            font-size: 12px;
+        }
+
+        .search-area .form-control {
+            min-width: 180px;
+        }
+    }
+
+    @media (max-width: 1199.98px) {
+        .inventario-toolbar {
+            align-items: stretch;
+        }
+
+        .tool-list {
+            justify-content: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .search-area {
+            justify-content: flex-start;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .inventario-page {
+            padding: 0;
+        }
+
+        .inventario-title {
+            text-align: left;
+            font-size: 24px;
+        }
+
+        .inventario-toolbar,
+        .inventario-footer {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .search-area {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .search-area .form-control,
+        .search-area .btn,
+        .btn-producto-nuevo {
+            width: 100%;
         }
     }
 </style>
+{% endblock %}
 
-<div class="inventario-wrapper">
+{% block content %}
+<div class="inventario-page">
+    <h3 style="text-align: center;"><strong>Listado de productos</strong></h3>
 
-    <h1 class="page-title">Listado de productos</h1>
+    <form method="get" id="filtroInventario">
+        <div class="inventario-toolbar">
+            <div>
+                <label for="por_pagina" class="form-label mb-1">Por página</label>
+                <select
+                    id="por_pagina"
+                    name="por_pagina"
+                    class="form-select"
+                    style="width: 96px;"
+                    onchange="document.getElementById('filtroInventario').submit();"
+                >
+                    <option value="10" {% if por_pagina == 10 %}selected{% endif %}>10</option>
+                    <option value="25" {% if por_pagina == 25 %}selected{% endif %}>25</option>
+                    <option value="50" {% if por_pagina == 50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if por_pagina == 100 %}selected{% endif %}>100</option>
+                </select>
+            </div>
 
-    <div class="top-line">
-
-        <div>
-            <label>Por página</label>
-            <select class="form-select form-select-sm" style="width:90px;">
-                <option>10</option>
-                <option>25</option>
-                <option>50</option>
-            </select>
-        </div>
-
-        <div class="export-box">
-            <div>Exportar</div>
-            <div class="export-icons">
-                <a href="{% url 'inventario:preview_exportar_productos' %}">
-                    <i class="bi bi-file-earmark-excel text-success"></i>
-                </a>
-                <a href="{% url 'inventario:preview_exportar_productos' %}">
-                    <i class="bi bi-file-earmark-pdf text-danger"></i>
-                </a>
+            <div class="inventario-export">
+                <div class="inventario-export-title">Exportar</div>
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="{% url 'inventario:preview_exportar_productos' %}" class="export-btn" title="Exportar Excel">
+                        <i class="bi bi-file-earmark-excel text-success"></i>
+                    </a>
+                    <a href="{% url 'inventario:preview_exportar_productos' %}" class="export-btn" title="Exportar PDF">
+                        <i class="bi bi-file-earmark-pdf text-danger"></i>
+                    </a>
+                </div>
             </div>
         </div>
 
-    </div>
-
-    <div class="inventario-card">
-
-        <form method="get" id="filtroInventario">
-
-            <div class="filter-row">
-
-                <div>
-                    <label class="fw-bold mb-1">Tipos de productos</label>
+        <div class="inventario-card">
+            <div class="inventario-filter row g-3 align-items-end">
+                <div class="col-12 col-lg-3 col-xl-2">
+                    <label for="categoria" class="form-label mb-1">Tipos de productos</label>
                     <select
+                        id="categoria"
                         name="categoria"
-                        class="form-select form-select-sm"
+                        class="form-select"
                         onchange="document.getElementById('filtroInventario').submit();"
                     >
                         <option value="">TODOS</option>
@@ -231,11 +403,12 @@
                     </select>
                 </div>
 
-                <div>
-                    <label class="fw-bold mb-1">Bodega</label>
+                <div class="col-12 col-lg-3 col-xl-2">
+                    <label for="sede" class="form-label mb-1">Bodega</label>
                     <select
+                        id="sede"
                         name="sede"
-                        class="form-select form-select-sm"
+                        class="form-select"
                         onchange="document.getElementById('filtroInventario').submit();"
                     >
                         <option value="">TODAS</option>
@@ -250,151 +423,201 @@
                     </select>
                 </div>
 
-                <div class="tool-icons">
-                    <a href="{% url 'inventario:menu_digital_productos' %}">
-                        <span>Menú<br>Digital</span>
-                        <i class="bi bi-qr-code"></i>
-                    </a>
-                    <a href="{% url 'inventario:variacion_producto_list' %}">
-                        <span>Ver<br>Variación</span>
-                        <i class="bi bi-sliders"></i>
-                    </a>
-                    <a href="{% url 'inventario:importar_productos_excel' %}">
-                        <span>Importar<br>Productos</span>
-                        <i class="bi bi-cloud-arrow-up"></i>
-                    </a>
-                    <a href="{% url 'inventario:actualizar_productos_excel' %}">
-                        <span>Actualizar<br>Productos</span>
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </a>
-                </div>
-
-                <div>
-                    <div class="search-area">
-                        <input
-                            type="text"
-                            name="buscar"
-                            value="{{ buscar }}"
-                            class="form-control form-control-sm"
-                            placeholder="Buscar por nombre o Cód. de barra"
-                        >
-                        <button class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-search"></i>
-                        </button>
-                        <a href="{% url 'inventario:stock_bodega_create' %}" class="btn-nuevo">
-                            Nuevo
+                <div class="col-12 col-xl-4">
+                    <div class="tool-list">
+                        <a href="{% url 'inventario:menu_digital_productos' %}" class="tool-link">
+                            <span>Menú<br>Digital</span>
+                            <i class="bi bi-qr-code"></i>
+                        </a>
+                        <a href="{% url 'inventario:variacion_producto_list' %}" class="tool-link">
+                            <span>Ver<br>Variación</span>
+                            <i class="bi bi-sliders"></i>
+                        </a>
+                        <a href="{% url 'inventario:importar_productos_excel' %}" class="tool-link">
+                            <span>Importar<br>Productos</span>
+                            <i class="bi bi-cloud-arrow-up"></i>
+                        </a>
+                        <a href="{% url 'inventario:actualizar_productos_excel' %}" class="tool-link">
+                            <span>Actualizar<br>Productos</span>
+                            <i class="bi bi-arrow-clockwise"></i>
                         </a>
                     </div>
                 </div>
 
+                <div class="col-12 col-xl-4">
+                    <div class="search-area justify-content-xl-end">
+                        <input
+                            type="text"
+                            name="buscar"
+                            value="{{ buscar }}"
+                            class="form-control"
+                            placeholder="Buscar por nombre o Cód. de barra"
+                        >
+                        <button class="btn btn-outline-primary" type="submit" title="Buscar">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        {% if buscar or sede_id or categoria_id %}
+                            <a href="{% url 'inventario:inventario_producto_list' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                <i class="bi bi-x-lg"></i>
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'inventario:stock_bodega_create' %}" class="btn-producto-nuevo">
+                            Nuevo
+                        </a>
+                    </div>
+                </div>
             </div>
 
-        </form>
-
-        <div class="table-responsive">
-
-            <table class="table tabla-inventario align-middle">
-
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Imagen</th>
-                        <th>Código de<br>Barra</th>
-                        <th>Nombre</th>
-                        <th>Stock</th>
-                        <th>Valor de<br>Compra</th>
-                        <th>Valor de<br>Venta</th>
-                        <th>Valor de Venta Al<br>por Mayor</th>
-                        <th>Producto</th>
-                        <th>Insumo</th>
-                        <th>Receta<br>Servicio<br>Combo</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    {% for stock in stocks %}
+            <div class="table-responsive inventario-table-wrap">
+                <table class="table table-bordered table-hover align-middle tabla-inventario">
+                    <thead>
                         <tr>
+                            <th>Item</th>
+                            <th>Imagen</th>
+                            <th>Código de<br>Barra</th>
+                            <th>Nombre</th>
+                            <th>Stock</th>
+                            <th>Valor de<br>Compra</th>
+                            <th>Valor de<br>Venta</th>
+                            <th>Valor de Venta Al<br>por Mayor</th>
+                            <th>Producto</th>
+                            <th>Insumo</th>
+                            <th>Receta<br>Servicio<br>Combo</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stock in stocks %}
+                            <tr>
+                                <td>{{ inicio_registro|add:forloop.counter0 }}</td>
 
-                            <td>{{ forloop.counter }}</td>
+                                <td>
+                                    {% if stock.producto.imagen %}
+                                        <img src="{{ stock.producto.imagen.url }}" class="producto-img-mini" alt="{{ stock.producto.nombre }}">
+                                    {% elif stock.producto.imagen_url %}
+                                        <img src="{{ stock.producto.imagen_url }}" class="producto-img-mini" alt="{{ stock.producto.nombre }}">
+                                    {% else %}
+                                        <div class="sin-imagen">
+                                            <i class="bi bi-image"></i>
+                                        </div>
+                                    {% endif %}
+                                </td>
 
-                            <td>
-                                {% if stock.producto.imagen %}
-                                    <img src="{{ stock.producto.imagen.url }}" class="producto-img-mini">
-                                {% elif stock.producto.imagen_url %}
-                                    <img src="{{ stock.producto.imagen_url }}" class="producto-img-mini">
-                                {% else %}
-                                    <div class="sin-imagen">
-                                        <i class="bi bi-image"></i>
+                                <td><span class="codigo-texto">{{ stock.producto.codigo }}</span></td>
+                                <td class="col-nombre">{{ stock.producto.nombre }}</td>
+                                <td><span class="stock-texto">{{ stock.stock|floatformat:0 }} Und</span></td>
+                                <td>S/ {{ stock.producto.precio_compra|default:"0.00"|floatformat:2 }}</td>
+                                <td>S/ {{ stock.producto.precio_venta|floatformat:2 }}</td>
+                                <td>S/ 0.00</td>
+
+                                <td>
+                                    {% if stock.producto.es_insumo %}
+                                        <span class="icon-no">&#10006;</span>
+                                    {% else %}
+                                        <span class="icon-ok">&#10004;</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if stock.producto.es_insumo %}
+                                        <span class="icon-ok">&#10004;</span>
+                                    {% else %}
+                                        <span class="icon-no">&#10006;</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if stock.producto.receta_servicio_combo != 'NINGUNO' %}
+                                        <span class="badge text-bg-primary">{{ stock.producto.receta_servicio_combo }}</span>
+                                    {% else %}
+                                        <span class="icon-no">&#10006;</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if stock.activo and stock.producto.activo %}
+                                        <span class="badge-activo">Activo</span>
+                                    {% else %}
+                                        <span class="badge text-bg-danger">Inactivo</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <div class="acciones-producto">
+                                        <a href="{% url 'inventario:imprimir_barcode_producto' stock.producto.id %}" target="_blank" title="Imprimir código de barras" class="accion-btn barcode">
+                                            <i class="bi bi-upc-scan"></i>
+                                        </a>
+                                        <a href="{% url 'inventario:stock_bodega_update' stock.id %}" title="Editar" class="accion-btn editar">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <a href="{% url 'inventario:stock_bodega_delete' stock.id %}" title="Eliminar" class="accion-btn eliminar" onclick="return confirm('¿Seguro que deseas eliminar este producto?');">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
                                     </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="13" class="text-center text-secondary py-5">
+                                    No hay productos asignados a bodegas.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="inventario-footer">
+                <div>
+                    {% if total_registros %}
+                        Mostrando {{ inicio_registro }} - {{ fin_registro }} de {{ total_registros }} productos
+                    {% else %}
+                        Sin productos para mostrar
+                    {% endif %}
+                </div>
+
+                {% if paginator.num_pages > 1 %}
+                    <nav aria-label="Paginación de productos">
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">«</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">«</span></li>
+                            {% endif %}
+
+                            {% for pagina in paginator.page_range %}
+                                {% if pagina == page_obj.number %}
+                                    <li class="page-item active"><span class="page-link">{{ pagina }}</span></li>
+                                {% elif pagina >= page_obj.number|add:'-2' and pagina <= page_obj.number|add:'2' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ pagina }}">{{ pagina }}</a>
+                                    </li>
                                 {% endif %}
-                            </td>
+                            {% endfor %}
 
-                            <td>{{ stock.producto.codigo }}</td>
-
-                            <td class="nombre">{{ stock.producto.nombre }}</td>
-
-                            <td>{{ stock.stock|floatformat:0 }} Und</td>
-
-                            <td>S/ {{ stock.producto.precio_compra|default:"0.00" }}</td>
-
-                            <td>S/ {{ stock.producto.precio_venta }}</td>
-
-                            <td>S/ 0.00</td>
-
-                            <td><span class="icon-ok">&#10004;</span></td>
-
-                            <td><span class="icon-no">&#10006;</span></td>
-
-                            <td><span class="icon-no">&#10006;</span></td>
-
-                            <td>
-                                {% if stock.activo and stock.producto.activo %}
-                                    <span class="estado-activo">Activo</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Inactivo</span>
-                                {% endif %}
-                            </td>
-
-                            <td>
-                                <a href="{% url 'inventario:imprimir_barcode_producto' stock.producto.id %}" target="_blank" title="Imprimir código de barras" class="action-icon barcode-icon"><i class="bi bi-upc-scan"></i></a>
-                                <a href="{% url 'inventario:stock_bodega_update' stock.id %}" title="Editar" class="action-icon edit-icon"><i class="bi bi-pencil-square"></i></a>
-                                <a href="{% url 'inventario:stock_bodega_delete' stock.id %}" title="Eliminar" class="action-icon delete-icon" onclick="return confirm('¿Seguro que deseas eliminar este producto?');"><i class="bi bi-trash"></i></a>
-                            </td>
-
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="13" class="text-center py-5 text-muted">
-                                No hay productos asignados a bodegas.
-                            </td>
-                        </tr>
-                    {% endfor %}
-
-                </tbody>
-
-            </table>
-
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">»</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">»</span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% else %}
+                    <nav aria-label="Paginación de productos">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item disabled"><span class="page-link">«</span></li>
+                            <li class="page-item active"><span class="page-link">1</span></li>
+                            <li class="page-item disabled"><span class="page-link">»</span></li>
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
         </div>
-
-        <div class="d-flex justify-content-between align-items-center mt-3">
-
-            <div>Paginas: 1</div>
-
-            <nav>
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item disabled"><a class="page-link">«</a></li>
-                    <li class="page-item active"><a class="page-link">1</a></li>
-                    <li class="page-item disabled"><a class="page-link">»</a></li>
-                </ul>
-            </nav>
-
-        </div>
-
-    </div>
-
+    </form>
 </div>
-
 {% endblock %}
